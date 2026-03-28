@@ -42,11 +42,15 @@ session.
 |---------|---------|--------|----------|
 | PR list + filters | ✓ | ✓ | ✓ |
 | Inline diff with syntax highlight | ✓ | ✓ | ✓ |
-| Line-level comments | ✓ | ✗ | ✓ |
+| Line-level comments + threads | ✓ | ✗ | ✓ |
 | Approve / request-changes | ✓ | ✓ | ✓ |
 | Merge strategy picker | ✓ | ✗ | ✓ |
 | Actions logs streaming | ✓ | ✓ | ✓ |
 | Fuzzy search every list | ✗ | ✗ | ✓ |
+| Find text in diff | ✗ | ✗ | ✓ |
+| File tree navigation in diff | ✗ | ✗ | ✓ |
+| Author filter for PR search | ✓ | ✗ | ✓ |
+| Full config + custom themes | ✗ | ✗ | ✓ |
 | Keyboard-only, no mouse needed | ✗ | ✓ | ✓ |
 
 ---
@@ -96,13 +100,13 @@ ghui
 
 ## Panes
 
-| Pane | Key | What you can do |
-|------|-----|-----------------|
-| Pull Requests | `Tab` | list, detail, diff, line comments, approve, merge, labels, reviewers |
-| Issues | `Tab` | list, detail, create, close, labels, assignees |
-| Branches | `Tab` | list, checkout, create, delete, push |
-| Actions | `Tab` | list runs, view logs, re-run, cancel |
-| Notifications | `Tab` | list, open, mark read / all read |
+| Pane | What you can do |
+|------|-----------------|
+| Pull Requests | list, filter (open/closed/merged), fuzzy search, author filter, detail, diff, line comments, approve, merge, labels, reviewers, create PR |
+| Issues | list, filter (open/closed), create, close, labels, assignees |
+| Branches | list, checkout, create, delete, push |
+| Actions | list runs, view logs, re-run, cancel |
+| Notifications | list, open, mark read / all read |
 
 ---
 
@@ -113,6 +117,7 @@ ghui
 |-----|--------|
 | `Tab` / `Shift+Tab` | Cycle panes |
 | `j` / `k` or `↑↓` | Navigate list |
+| `gg` / `G` | Jump to top / bottom |
 | `Enter` | Open detail |
 | `r` | Refresh (force re-fetch) |
 | `o` | Open in browser |
@@ -123,6 +128,12 @@ ghui
 ### Pull Requests
 | Key | Action |
 |-----|--------|
+| `O` | Filter: open (configurable) |
+| `C` | Filter: closed (configurable) |
+| `M` | Filter: merged (configurable) |
+| `f` | Cycle filter (fallback) |
+| `s` | Cycle scope (all / own / reviewing) |
+| `@` | Filter by author (any GitHub username) |
 | `d` | Open diff view |
 | `m` | Merge (pick --merge / --squash / --rebase) |
 | `a` | Approve |
@@ -131,24 +142,41 @@ ghui
 | `l` | Edit labels |
 | `A` | Edit assignees |
 | `rv` | Request reviewers |
+| `N` | New PR (with branch validation) |
+| `y` | Copy PR URL |
+
+### PR Detail
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Scroll detail |
+| `/` | Search within detail |
+| `Esc` | Clear search / go back |
+| `d` | Open diff view |
 
 ### Diff view
 | Key | Action |
 |-----|--------|
 | `j` / `k` | Scroll lines |
 | `[` / `]` | Previous / next file |
-| `n` / `N` | Previous / next comment thread |
-| `c` | Comment on cursor line |
+| `t` | Toggle file tree |
+| `/` | Find text in diff |
+| `n` / `N` | Next / prev match (or comment thread) |
+| `c` | Comment on cursor line (inline compose) |
 | `v` | View all comments |
 | `s` | Toggle split / unified |
+| `Esc` | Back to PR detail |
 
 ### Issues
 | Key | Action |
 |-----|--------|
+| `O` | Filter: open (configurable) |
+| `C` | Filter: closed (configurable) |
+| `f` | Cycle filter (fallback) |
 | `n` | New issue |
 | `x` | Close issue |
 | `l` | Edit labels |
 | `A` | Edit assignees |
+| `y` | Copy issue URL |
 
 ### Actions
 | Key | Action |
@@ -156,6 +184,116 @@ ghui
 | `l` | View logs |
 | `R` | Re-run failed jobs |
 | `X` | Cancel run |
+
+### Notifications
+| Key | Action |
+|-----|--------|
+| `Enter` | Open item (routes to correct pane) |
+| `m` | Mark as read |
+| `M` | Mark all as read |
+
+---
+
+## Configuration
+
+On first run, `ghui` creates `~/.config/ghui/config.json` with defaults.
+Edit this file to customize everything:
+
+```json
+{
+  "panes": ["prs", "issues", "branches", "actions", "notifications"],
+  "defaultPane": "prs",
+  "theme": "github-dark",
+  "pr": {
+    "defaultFilter": "open",
+    "defaultScope": "all",
+    "pageSize": 100,
+    "keys": {
+      "filterOpen":   "O",
+      "filterClosed": "C",
+      "filterMerged": "M"
+    }
+  },
+  "issues": {
+    "defaultFilter": "open",
+    "pageSize": 50,
+    "keys": {
+      "filterOpen":   "O",
+      "filterClosed": "C"
+    }
+  },
+  "actions": {
+    "pageSize": 30
+  },
+  "diff": {
+    "defaultView": "unified",
+    "syntaxHighlight": true,
+    "maxLines": 2000
+  },
+  "customPanes": {}
+}
+```
+
+### Custom panes
+
+Add your own panes backed by any `gh api` command:
+
+```json
+"customPanes": {
+  "my-deploys": {
+    "label": "Deployments",
+    "icon": "▶",
+    "command": "gh api repos/{repo}/deployments --jq '[.[] | {title:.environment,number:.id,state:.task,updatedAt:.created_at,url:.url}]'",
+    "actions": { "o": "open" }
+  }
+}
+```
+
+Placeholders: `{repo}`, `{owner}`, `{name}`
+
+---
+
+## Themes
+
+### Built-in themes
+
+| Name | Style |
+|------|-------|
+| `github-dark` | Dark (default) — GitHub-inspired |
+| `github-light` | Light — GitHub-inspired |
+| `catppuccin-mocha` | Extra dark pastel |
+| `catppuccin-latte` | Light pastel |
+| `tokyo-night` | Dark blue/purple |
+
+Set in config:
+
+```json
+{ "theme": "tokyo-night" }
+```
+
+### Custom themes from file
+
+```json
+{ "theme": "/absolute/path/to/my-theme.json" }
+{ "theme": "~/my-theme.json" }
+{ "theme": "my-theme.json" }
+```
+
+### Override specific colors
+
+```json
+{
+  "theme": {
+    "name": "github-dark",
+    "overrides": {
+      "ui": { "selected": "#ff9900" },
+      "pr":  { "open": "#00ff88" }
+    }
+  }
+}
+```
+
+Theme files use the same shape as built-in themes. All color values are hex strings.
 
 ---
 
@@ -167,8 +305,10 @@ ghui/
 ├── src/
 │   ├── bootstrap.js     ← gh detect, auth, repo pick (runs before Ink)
 │   ├── executor.js      ← single place all gh CLI calls live
-│   ├── theme.js         ← color tokens (never inline hex)
+│   ├── theme.js         ← dynamic theme resolution (named/file/overrides)
+│   ├── config.js        ← loads ~/.config/ghui/config.json with defaults
 │   ├── app.jsx          ← root Ink layout + responsive breakpoints
+│   ├── themes/          ← 5 built-in theme definitions
 │   ├── components/      ← Sidebar, StatusBar, FooterKeys, ListPane, DetailPane
 │   │   └── dialogs/     ← 6 reusable primitives (FuzzySearch → LogViewer)
 │   ├── features/        ← prs, issues, branches, actions, notifications…
@@ -177,6 +317,11 @@ ghui/
 ```
 
 **Stack:** Node.js 20+ · [Ink 4](https://github.com/vadimdemedes/ink) · React 18 · [execa](https://github.com/sindresorhus/execa) · [highlight.js](https://highlightjs.org) · [timeago.js](https://timeago.org) · [vitest](https://vitest.dev)
+
+**Responsive layout:**
+- ≥100 cols: sidebar + list + detail panel
+- <100 cols: sidebar + list (Enter for full-screen detail)
+- <80 cols: header tabs + list (no sidebar)
 
 ---
 
@@ -199,10 +344,10 @@ See the [project board](https://github.com/users/saketh-kowtha/projects) and [op
 
 Highlights coming up:
 - Homebrew tap
-- Split-pane diff view
 - GitHub Enterprise (`GH_HOST`) support
-- Config file + custom themes
 - Mouse support (opt-in)
+- Releases pane
+- Gists pane
 
 ---
 
