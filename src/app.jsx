@@ -524,7 +524,12 @@ export function App({ repo }) {
             <SettingsPane onBack={() => setView('list')} />
           </Box>
           <StatusBar repo={repo} pane="settings" />
-          <FooterKeys keys={[{ key: 'Esc', label: 'back' }]} />
+          <FooterKeys keys={[
+            { key: 'j/k', label: 'navigate' },
+            { key: 'Enter', label: 'select' },
+            { key: '?', label: 'help' },
+            { key: 'Esc', label: 'back' }
+          ]} />
         </Box>
       </AppContext.Provider>
     )
@@ -532,6 +537,20 @@ export function App({ repo }) {
 
   if (view === 'detail' && selectedItem) {
     const DetailPane = pane === 'issues' ? IssueDetail : PRDetail
+    const detailFooter = [
+      { key: 'j/k', label: 'scroll' },
+      { key: 'gg/G', label: 'top/bottom' },
+      ...(pane === 'prs' ? [
+        { key: 'd', label: 'diff' }, { key: 'v', label: 'comments' },
+        { key: 'm', label: 'merge' }, { key: 'a', label: 'approve' },
+      ] : [
+        { key: 'r', label: 'reply' },
+      ]),
+      { key: 'l', label: 'labels' }, { key: 'A', label: 'assignees' },
+      { key: 'r', label: 'refresh' }, { key: '?', label: 'help' },
+      { key: 'Esc', label: 'back' },
+    ]
+
     return (
       <AppContext.Provider value={appCtx}>
         <Box flexDirection="column">
@@ -546,12 +565,7 @@ export function App({ repo }) {
             />
           </Box>
           <StatusBar repo={repo} pane={pane} count={paneState.count} />
-          <FooterKeys keys={[
-            { key: 'd', label: 'diff' }, { key: 'v', label: 'comments' },
-            { key: 'm', label: 'merge' }, { key: 'a', label: 'approve' },
-            { key: 'r', label: 'refresh' }, { key: '?', label: 'help' },
-            { key: 'Esc', label: 'back' },
-          ]} />
+          <FooterKeys keys={detailFooter} />
         </Box>
       </AppContext.Provider>
     )
@@ -594,11 +608,11 @@ export function App({ repo }) {
   const listFooter = (() => {
     const base = [
       { key: 'j/k', label: 'nav' }, { key: 'Tab', label: 'pane' },
-      { key: 'r', label: 'refresh' }, { key: '/', label: 'search' },
+      { key: 'r', label: 'refresh' }, { key: 'S', label: 'settings' },
       { key: '?', label: 'help' },
     ]
-    if (pane === 'prs')    return [...base, { key: 'Enter', label: 'open' }, { key: 'd', label: 'diff' }, { key: 'f', label: 'filter' }, { key: 'm', label: 'merge' }]
-    if (pane === 'issues') return [...base, { key: 'Enter', label: 'open' }, { key: 'f', label: 'filter' }, { key: 'n', label: 'new' }]
+    if (pane === 'prs')    return [...base, { key: 'Enter', label: 'open' }, { key: 'd', label: 'diff' }, { key: 'f', label: 'filter' }]
+    if (pane === 'issues') return [...base, { key: 'Enter', label: 'open' }, { key: 'n', label: 'new' }]
     return base
   })()
 
