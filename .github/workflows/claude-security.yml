@@ -9,7 +9,12 @@ jobs:
   security:
     name: Claude Security Audit
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    # Only run for repo owner/members/collaborators — prevents fork PRs from consuming API tokens
+    if: |
+      github.event.pull_request.draft == false &&
+      (github.event.pull_request.author_association == 'OWNER' ||
+       github.event.pull_request.author_association == 'MEMBER' ||
+       github.event.pull_request.author_association == 'COLLABORATOR')
     permissions:
       contents: read
       pull-requests: write    # post comment
