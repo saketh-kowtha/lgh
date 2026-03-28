@@ -792,15 +792,21 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
         } else if (compose.mode === 'reply') {
           if (body) {
             replyToComment(repo, prNumber, compose.rootCommentId, body)
-              .then(() => { setCommentStatus('Reply sent'); refetch(); setTimeout(() => setCommentStatus(null), 3000) })
+              .then(() => { setCompose(null); setCommentStatus('Reply sent'); refetch(); setTimeout(() => setCommentStatus(null), 3000) })
               .catch(err => { setCommentStatus(`Failed: ${err.message}`); setTimeout(() => setCommentStatus(null), 3000) })
+          } else {
+            setCompose(null)
           }
+          return
         } else if (compose.mode === 'edit') {
           if (body) {
             editPRComment(repo, compose.commentId, body)
-              .then(() => { setCommentStatus('Comment updated'); refetch(); setTimeout(() => setCommentStatus(null), 3000) })
+              .then(() => { setCompose(null); setCommentStatus('Comment updated'); refetch(); setTimeout(() => setCommentStatus(null), 3000) })
               .catch(err => { setCommentStatus(`Failed: ${err.message}`); setTimeout(() => setCommentStatus(null), 3000) })
+          } else {
+            setCompose(null)
           }
+          return
         }
         setCompose(null)
         return
@@ -838,7 +844,6 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
     lastKeyRef.current = null
 
     if (input === 'G')  { jumpTo(rows.length - 1); return }
-    if (input === 'r')  { refetch(); return }
     // Esc: clear find query first, then go back on second Esc
     if (key.escape && findQuery) { setFindQuery(''); return }
     if (key.escape || input === 'q') { onBack(); return }
@@ -902,8 +907,26 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
       return
     }
 
-    // r/e/d — reply/edit/delete on thread at cursor line
-    if (input === 'r' || input === 'e' || input === 'd') {
+    // e/d — edit/delete on thread at cursor line (no fallback action)
+    if (input === 'e' || input === 'd') {
+      const row = rows[cursor]
+      const lineNum = row ? (row.newLine ?? row.oldLine) : null
+      const lineKey = lineNum != null ? `${row.filename}:${lineNum}` : null
+      const lineComments = lineKey ? commentsByLine.get(lineKey) : null
+      if (lineComments?.length) {
+        const sorted = [...lineComments].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        const lastComment = sorted[sorted.length - 1]
+        if (input === 'e' && lastComment) {
+          setCompose({ mode: 'edit', commentId: lastComment.id, body: lastComment.body || '' })
+        } else if (input === 'd' && lastComment) {
+          setCompose({ mode: 'delete', commentId: lastComment.id, commentBody: lastComment.body || '' })
+        }
+      }
+      return
+    }
+
+    // r — reply on thread at cursor line, or refetch if no thread there
+    if (input === 'r') {
       const row = rows[cursor]
       const lineNum = row ? (row.newLine ?? row.oldLine) : null
       const lineKey = lineNum != null ? `${row.filename}:${lineNum}` : null
@@ -912,17 +935,11 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
         const sorted = [...lineComments].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
         const roots = sorted.filter(c => !c.inReplyToId)
         const rootId = roots[0]?.id
-        const lastComment = sorted[sorted.length - 1]
-        if (input === 'r' && rootId) {
-          setCompose({ mode: 'reply', rootCommentId: rootId, body: '' })
-        } else if (input === 'e' && lastComment) {
-          setCompose({ mode: 'edit', commentId: lastComment.id, body: lastComment.body || '' })
-        } else if (input === 'd' && lastComment) {
-          setCompose({ mode: 'delete', commentId: lastComment.id, commentBody: lastComment.body || '' })
-        }
-        return
+        if (rootId) setCompose({ mode: 'reply', rootCommentId: rootId, body: '' })
+      } else {
+        refetch()
       }
-      // No comments on this line — fall through so 'r' reaches the refetch handler below
+      return
     }
   })
 
