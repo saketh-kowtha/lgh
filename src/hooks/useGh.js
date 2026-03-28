@@ -49,6 +49,7 @@ export function useGh(fetchFn, deps = [], { ttl = DEFAULT_TTL } = {}) {
       cache.set(cacheKey, { data: result, timestamp: Date.now() })
       setData(result)
       setError(null)
+      logger.info(`gh.${fetchFn.name || 'unnamed'} fetched data`, { cacheKey, component: 'useGh' })
     } catch (err) {
       if (!mountedRef.current) return
       setError(err)

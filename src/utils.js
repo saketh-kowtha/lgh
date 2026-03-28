@@ -17,21 +17,45 @@ const LOG_FILE = join(homedir(), '.config', 'lazyhub', 'debug.log')
  * Global logger for debugging.
  */
 export const logger = {
-  info:  (msg) => log('INFO', msg),
-  error: (msg, err) => log('ERROR', `${msg}${err ? `\n${err.stack || err}` : ''}`),
-  debug: (msg) => log('DEBUG', msg),
+  info:  (msg, meta) => log('INFO', msg, meta),
+  warn:  (msg, meta) => log('WARN', msg, meta),
+  error: (msg, err, meta) => log('ERROR', msg, { 
+    ...meta, 
+    error: err?.message || String(err),
+    stack: err?.stack 
+  }),
+  debug: (msg, meta) => log('DEBUG', msg, meta),
 }
 
-function log(level, msg) {
+function log(level, message, meta = {}) {
   try {
-    const timestamp = new Date().toISOString()
-    const line = `[${timestamp}] [${level}] ${msg}\n`
-    // Ensure dir exists
+    const entry = {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      ...meta,
+    }
+    const line = JSON.stringify(entry) + '\n'
     const dir = dirname(LOG_FILE)
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     appendFileSync(LOG_FILE, line, 'utf8')
   } catch {
     // ignore logging failures
+  }
+}
+
+/**
+ * Reads and parses logs from the log file.
+ */
+export function getLogs() {
+  if (!existsSync(LOG_FILE)) return []
+  try {
+    const content = readFileSync(LOG_FILE, 'utf8')
+    return content.trim().split('\n').map(line => {
+      try { return JSON.parse(line) } catch { return null }
+    }).filter(Boolean).reverse() // Newest first
+  } catch {
+    return []
   }
 }
 

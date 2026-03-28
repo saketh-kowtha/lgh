@@ -43,6 +43,7 @@ export function SettingsPane({ onBack }) {
     setConfig(next)
     saveConfig(next)
     if (patch.theme) setTheme(patch.theme)
+    logger.info(`Config updated: ${JSON.stringify(patch)}`, { component: 'Settings' })
   }
 
   if (dialog === 'theme') {

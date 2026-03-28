@@ -30,6 +30,7 @@ import { IssueDetail } from './features/issues/detail.jsx'
 import { BranchList } from './features/branches/index.jsx'
 import { ActionList } from './features/actions/index.jsx'
 import { SettingsPane } from './features/settings/index.jsx'
+import { LogPane } from './features/logs/index.jsx'
 import { NotificationList } from './features/notifications/index.jsx'
 import { CustomPane } from './components/CustomPane.jsx'
 
@@ -72,6 +73,7 @@ const GLOBAL_KEYS = [
   { key: '/',               label: 'fuzzy search current list' },
   { key: '?',               label: 'toggle this help overlay' },
   { key: 'S',               label: 'settings' },
+  { key: 'L',               label: 'logs' },
   { key: 'q / Esc',         label: 'back one level / quit at root' },
 ]
 
@@ -439,10 +441,12 @@ export function App({ repo }) {
     }
 
     if (input === 'S') { setView('settings'); setSelectedItem(null); return }
+    if (input === 'L') { setView('logs'); setSelectedItem(null); return }
 
     if (input === 'q' || key.escape) {
       if (showHelp)           { setShowHelp(false); return }
       if (view === 'settings'){ setView('list'); return }
+      if (view === 'logs')    { setView('list'); return }
       if (view === 'comments'){ setView('diff'); return }
       if (view === 'diff')    { setView(selectedItem?._fromList ? 'list' : 'detail'); return }
       if (view === 'detail')  { setSelectedItem(null); setView('list'); return }
@@ -510,6 +514,33 @@ export function App({ repo }) {
           onBack={goBack}
           onJumpToDiff={() => setView('diff')}
         />
+      </AppContext.Provider>
+    )
+  }
+
+  if (view === 'logs') {
+    return (
+      <AppContext.Provider value={appCtx}>
+        <Box flexDirection="column" height={rows}>
+          <Box flexDirection="row" flexGrow={1}>
+            {showSidebar && (
+              <Sidebar currentPane={pane} visiblePanes={PANES}
+                paneLabels={PANE_LABELS} paneIcons={PANE_ICONS}
+                onSelect={(p) => { setPane(p); setSelectedItem(null); setView('list') }}
+                height={rows - 2}
+              />
+            )}
+            <LogPane onBack={() => setView('list')} />
+          </Box>
+          <StatusBar repo={repo} pane="logs" />
+          <FooterKeys keys={[
+            { key: 'j/k', label: 'navigate' },
+            { key: 'Enter', label: 'detail' },
+            { key: 'f', label: 'level' },
+            { key: '/', label: 'search' },
+            { key: 'Esc', label: 'back' }
+          ]} />
+        </Box>
       </AppContext.Provider>
     )
   }
