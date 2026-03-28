@@ -14,7 +14,7 @@ const diffRes = await fetch(
     headers: {
       Authorization: `Bearer ${GITHUB_TOKEN}`,
       Accept: 'application/vnd.github.v3.diff',
-      'User-Agent': 'ghui-claude-security',
+      'User-Agent': 'lazyhub-claude-security',
     },
   }
 )
@@ -39,7 +39,7 @@ const diffContent = truncated
 
 // ── 2. Call Claude ────────────────────────────────────────────────────────────
 
-const PROMPT = `You are a security engineer auditing a pull request for **ghui** — a CLI tool that wraps the GitHub CLI (\`gh\`).
+const PROMPT = `You are a security engineer auditing a pull request for **lazyhub** — a CLI tool that wraps the GitHub CLI (\`gh\`).
 
 **Threat model for this codebase:**
 - **Command injection** — \`executor.js\` builds args arrays for \`execa('gh', args)\`. Any unsanitized user input or external data reaching those args is critical.
@@ -118,7 +118,7 @@ const commentBody = [
   auditText,
   '',
   '---',
-  `*Audited by Claude Sonnet 4.6 · [ghui](https://github.com/${REPO})*`,
+  `*Audited by Claude Sonnet 4.6 · [lazyhub](https://github.com/${REPO})*`,
 ].join('\n')
 
 const commentRes = await fetch(
@@ -128,7 +128,7 @@ const commentRes = await fetch(
     headers: {
       Authorization: `Bearer ${GITHUB_TOKEN}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'ghui-claude-security',
+      'User-Agent': 'lazyhub-claude-security',
     },
     body: JSON.stringify({ body: commentBody }),
   }

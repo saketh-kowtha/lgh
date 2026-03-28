@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build script — transpiles JSX and resolves imports into dist/ghui.js
+ * Build script — transpiles JSX and resolves imports into dist/lazyhub.js
  * using esbuild. node_modules are kept as external (not bundled).
  */
 import * as esbuild from 'esbuild'
@@ -11,11 +11,11 @@ await mkdir('dist', { recursive: true })
 const watch = process.argv.includes('--watch')
 
 const ctx = await esbuild.context({
-  entryPoints: ['bin/ghui.js'],
+  entryPoints: ['bin/lazyhub.js'],
   bundle: true,
   platform: 'node',
   format: 'esm',
-  outfile: 'dist/ghui.js',
+  outfile: 'dist/lazyhub.js',
   loader: { '.jsx': 'jsx' },
   packages: 'external',          // leave node_modules as-is
   banner: { js: '#!/usr/bin/env node' },

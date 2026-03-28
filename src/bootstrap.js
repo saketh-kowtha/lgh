@@ -105,7 +105,7 @@ export async function getLoggedInUser() {
 }
 
 export async function runLoginFlow() {
-  process.stdout.write('  ghui needs GitHub access. Starting login...\n')
+  process.stdout.write('  lazyhub needs GitHub access. Starting login...\n')
 
   if (process.env.GITHUB_TOKEN) {
     try {

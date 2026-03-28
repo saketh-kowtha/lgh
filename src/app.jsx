@@ -271,7 +271,7 @@ function HelpOverlay({ pane, view, onClose }) {
       <Box marginTop={1} flexDirection="column">
         <Box gap={1}>
           <Text color={t.ui.dim}>Config:</Text>
-          <Text color={t.ui.selected}>~/.config/ghui/config.json</Text>
+          <Text color={t.ui.selected}>~/.config/lazyhub/config.json</Text>
           <Text color={t.ui.dim}>  Docs:</Text>
           <Text color={t.ui.selected}>https://saketh-kowtha.github.io/lgh/guide.html</Text>
         </Box>
@@ -364,7 +364,7 @@ export function App({ repo }) {
 
   // ─── Mouse support ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (process.env.GHUI_MOUSE !== '1') return
+    if (process.env.LAZYHUB_MOUSE !== '1') return
     // Enable mouse button + scroll tracking (X10 + SGR mode)
     process.stdout.write('\x1b[?1000h\x1b[?1002h\x1b[?1015h\x1b[?1006h')
     // Parse mouse events from raw stdin

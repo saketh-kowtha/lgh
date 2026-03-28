@@ -11,7 +11,7 @@
  *   "tokyo-night"               → built-in theme by name (dark)
  *   "/path/to/theme.json"       → load full custom theme from JSON file
  *   "~/..."                     → path resolved relative to home dir
- *   "./relative"                → path resolved relative to ~/.config/ghui/
+ *   "./relative"                → path resolved relative to ~/.config/lazyhub/
  *   { "name": "tokyo-night", "overrides": { "ui": { "selected": "#ff0" } } }
  *   { "ui": { "selected": "#ff0" } }  → plain overrides on github-dark (legacy)
  */
@@ -57,8 +57,8 @@ function deepMerge(base, overrides) {
 function resolvePath(p) {
   if (p.startsWith('~/')) return join(homedir(), p.slice(2))
   if (isAbsolute(p)) return p
-  // Relative paths are resolved from ~/.config/ghui/
-  return join(homedir(), '.config', 'ghui', p)
+  // Relative paths are resolved from ~/.config/lazyhub/
+  return join(homedir(), '.config', 'lazyhub', p)
 }
 
 function loadThemeFile(p) {
@@ -99,7 +99,7 @@ function resolveTheme(cfg) {
 
 function readRawThemeCfg() {
   try {
-    const cfgPath = join(homedir(), '.config', 'ghui', 'config.json')
+    const cfgPath = join(homedir(), '.config', 'lazyhub', 'config.json')
     if (!existsSync(cfgPath)) return null
     return JSON.parse(readFileSync(cfgPath, 'utf8'))?.theme ?? null
   } catch { return null }

@@ -1,5 +1,5 @@
 /**
- * config.js — loads ~/.config/ghui/config.json
+ * config.js — loads ~/.config/lazyhub/config.json
  *
  * ── Theme field ───────────────────────────────────────────────────────────────
  * Built-in theme names (use any as a plain string):
@@ -15,7 +15,7 @@
  *
  *   "theme": "/absolute/path/to/theme.json"
  *   "theme": "~/my-theme.json"
- *   "theme": "my-theme.json"   (resolved from ~/.config/ghui/)
+ *   "theme": "my-theme.json"   (resolved from ~/.config/lazyhub/)
  *     → load a full custom theme from a JSON file
  *
  *   "theme": { "name": "tokyo-night", "overrides": { "ui": { "selected": "#ff9900" } } }
@@ -81,7 +81,7 @@ export const BUILTIN_PANES = ['prs', 'issues', 'branches', 'actions', 'notificat
 /** @deprecated use BUILTIN_PANES */
 export const ALL_PANES = BUILTIN_PANES
 
-export const CONFIG_PATH = join(homedir(), '.config', 'ghui', 'config.json')
+export const CONFIG_PATH = join(homedir(), '.config', 'lazyhub', 'config.json')
 
 // ─── Section defaults ─────────────────────────────────────────────────────────
 

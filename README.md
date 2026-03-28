@@ -1,9 +1,9 @@
-# ghui
+# lazyhub
 
 > A **lazygit-style** GitHub TUI — every GitHub action available without leaving your terminal.
 
 [![CI](https://github.com/saketh-kowtha/lgh/actions/workflows/ci.yml/badge.svg)](https://github.com/saketh-kowtha/lgh/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/ghui.svg)](https://www.npmjs.com/package/ghui)
+[![npm version](https://img.shields.io/npm/v/lazyhub.svg)](https://www.npmjs.com/package/lazyhub)
 [![Node.js ≥20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -30,15 +30,15 @@
 
 ---
 
-## Why ghui?
+## Why lazyhub?
 
 Most GitHub workflows force you to context-switch to the browser. `gh` CLI is
 great but its output is flat text — no side-by-side layout, no live diffs, no
-interactive merge strategies.  **ghui** brings the full GitHub web UI into your
+interactive merge strategies.  **lazyhub** brings the full GitHub web UI into your
 terminal as a keyboard-driven TUI, so you never have to leave your editor
 session.
 
-| Feature | Browser | gh CLI | **ghui** |
+| Feature | Browser | gh CLI | **lazyhub** |
 |---------|---------|--------|----------|
 | PR list + filters | ✓ | ✓ | ✓ |
 | Inline diff with syntax highlight | ✓ | ✓ | ✓ |
@@ -60,23 +60,23 @@ session.
 ### npm (recommended)
 
 ```bash
-npm install -g ghui
+npm install -g lazyhub
 ```
 
 ### npx (no install)
 
 ```bash
-npx ghui
+npx lazyhub
 ```
 
 ### Homebrew (coming soon)
 
 ```bash
-brew install saketh-kowtha/tap/ghui
+brew install saketh-kowtha/tap/lazyhub
 ```
 
 **Prerequisites:** [Node.js ≥ 20](https://nodejs.org) and the [GitHub CLI (`gh`)](https://cli.github.com).
-`ghui` will detect missing tools and print platform-specific install instructions on first run.
+`lazyhub` will detect missing tools and print platform-specific install instructions on first run.
 
 ---
 
@@ -85,13 +85,13 @@ brew install saketh-kowtha/tap/ghui
 ```bash
 # From any git repo cloned from GitHub
 cd my-project
-ghui
+lazyhub
 
 # Or pick a repo interactively (works outside any git directory)
-ghui
+lazyhub
 ```
 
-`ghui` handles the rest:
+`lazyhub` handles the rest:
 - Detects `gh` — prints install instructions if missing
 - Detects `gh auth` — runs interactive login (browser or PAT) if needed
 - Detects repo context — shows an arrow-key picker if run outside a git directory
@@ -196,7 +196,7 @@ ghui
 
 ## Configuration
 
-On first run, `ghui` creates `~/.config/ghui/config.json` with defaults.
+On first run, `lazyhub` creates `~/.config/lazyhub/config.json` with defaults.
 Edit this file to customize everything:
 
 ```json
@@ -300,13 +300,13 @@ Theme files use the same shape as built-in themes. All color values are hex stri
 ## Architecture
 
 ```
-ghui/
-├── bin/ghui.js          ← entry: bootstrap() → renderApp()
+lazyhub/
+├── bin/lazyhub.js          ← entry: bootstrap() → renderApp()
 ├── src/
 │   ├── bootstrap.js     ← gh detect, auth, repo pick (runs before Ink)
 │   ├── executor.js      ← single place all gh CLI calls live
 │   ├── theme.js         ← dynamic theme resolution (named/file/overrides)
-│   ├── config.js        ← loads ~/.config/ghui/config.json with defaults
+│   ├── config.js        ← loads ~/.config/lazyhub/config.json with defaults
 │   ├── app.jsx          ← root Ink layout + responsive breakpoints
 │   ├── themes/          ← 5 built-in theme definitions
 │   ├── components/      ← Sidebar, StatusBar, FooterKeys, ListPane, DetailPane

@@ -1,15 +1,15 @@
 {
-  "name": "ghui",
+  "name": "lazyhub",
   "version": "0.1.0",
   "description": "A lazygit-style GitHub TUI — every GitHub action without leaving your terminal",
   "type": "module",
   "bin": {
-    "ghui": "./dist/ghui.js"
+    "lazyhub": "./dist/lazyhub.js"
   },
   "scripts": {
     "build": "node build.js",
-    "dev": "node build.js --watch & sleep 1 && node --watch dist/ghui.js",
-    "start": "node build.js && node dist/ghui.js",
+    "dev": "node build.js --watch & sleep 1 && node --watch dist/lazyhub.js",
+    "start": "node build.js && node dist/lazyhub.js",
     "lint": "eslint src/",
     "test": "vitest run",
     "prepublishOnly": "npm run build && npm test"
@@ -27,6 +27,7 @@
     "cli",
     "terminal",
     "lazygit",
+    "lazyhub",
     "ink",
     "react",
     "gh",

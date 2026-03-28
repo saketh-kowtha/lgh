@@ -1,5 +1,5 @@
 /**
- * executor.js — the ONLY place `gh` CLI is invoked in ghui.
+ * executor.js — the ONLY place `gh` CLI is invoked in lazyhub.
  * All calls go through run(args), which handles JSON parsing and error typing.
  */
 

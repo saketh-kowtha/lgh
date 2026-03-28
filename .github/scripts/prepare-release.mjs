@@ -163,7 +163,7 @@ async function buildAiNotes() {
   const commitSummary = commits.slice(0, 30).map(c => `- ${c.subject} (${c.hash})`).join('\n')
   const repoUrl = `https://github.com/${repo}`
 
-  const prompt = `You are writing release notes for ghui v${newVersion} — a lazygit-style GitHub TUI.
+  const prompt = `You are writing release notes for lazyhub v${newVersion} — a lazygit-style GitHub TUI.
 
 PR merged: #${prNumber} — "${prTitle}"
 Bump type: ${bump}
@@ -249,13 +249,13 @@ if (existsSync(readmePath)) {
   let readme = readFileSync(readmePath, 'utf8')
   // Update npm version badge
   readme = readme.replace(
-    /img\.shields\.io\/npm\/v\/ghui[^)]+/g,
-    `img.shields.io/npm/v/ghui?color=3fb950&label=npm`
+    /img\.shields\.io\/npm\/v\/lazyhub[^)]+/g,
+    `img.shields.io/npm/v/lazyhub?color=3fb950&label=npm`
   )
   // Update any explicit version mention in the install section
   readme = readme.replace(
-    /ghui@\d+\.\d+\.\d+/g,
-    `ghui@${newVersion}`
+    /lazyhub@\d+\.\d+\.\d+/g,
+    `lazyhub@${newVersion}`
   )
   writeFileSync(readmePath, readme)
   console.log('✓ README.md badge updated')
@@ -268,8 +268,8 @@ for (const docFile of docsFiles) {
   const docPath = join(ROOT, docFile)
   if (!existsSync(docPath)) continue
   let content = readFileSync(docPath, 'utf8')
-  // Replace version strings like "v0.1.0" or "ghui@0.1.0"
-  content = content.replace(/ghui@\d+\.\d+\.\d+/g, `ghui@${newVersion}`)
+  // Replace version strings like "v0.1.0" or "lazyhub@0.1.0"
+  content = content.replace(/lazyhub@\d+\.\d+\.\d+/g, `lazyhub@${newVersion}`)
   content = content.replace(/data-version="[\d.]+"/, `data-version="${newVersion}"`)
   writeFileSync(docPath, content)
   console.log(`✓ ${docFile} version updated`)

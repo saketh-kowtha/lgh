@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ghui — lazygit-style GitHub TUI</title>
+  <title>lazyhub — lazygit-style GitHub TUI</title>
   <meta name="description" content="A keyboard-driven terminal UI over the gh CLI. Every GitHub action — PRs, issues, diffs, Actions logs — without leaving your terminal." />
-  <meta property="og:title" content="ghui — lazygit-style GitHub TUI" />
+  <meta property="og:title" content="lazyhub — lazygit-style GitHub TUI" />
   <meta property="og:description" content="Every GitHub action without leaving your terminal." />
   <meta property="og:url" content="https://saketh-kowtha.github.io/lgh" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -294,13 +294,13 @@
 
   <div class="badges">
     <img src="https://github.com/saketh-kowtha/lgh/actions/workflows/ci.yml/badge.svg" alt="CI" />
-    <img src="https://img.shields.io/npm/v/ghui.svg" alt="npm version" />
+    <img src="https://img.shields.io/npm/v/lazyhub.svg" alt="npm version" />
     <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node ≥20" />
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT" />
   </div>
 
   <div class="install-block">
-    <span class="cmd">npm install -g ghui</span>
+    <span class="cmd">npm install -g lazyhub</span>
     <button class="copy-btn" onclick="copyInstall(this)">copy</button>
   </div>
 </section>
@@ -312,7 +312,7 @@
       <span class="dot dot-red"></span>
       <span class="dot dot-yellow"></span>
       <span class="dot dot-green"></span>
-      <span class="title">ghui — saketh-kowtha/lgh</span>
+      <span class="title">lazyhub — saketh-kowtha/lgh</span>
     </div>
     <pre class="screen">
 <span class="d">┌── Pull Requests ──────┬── #142 fix: memory leak in cache ─────────────────────┐</span>
@@ -396,25 +396,25 @@
     </div>
 
     <div id="tab-npm" class="tab-panel active">
-      <code class="block">npm install -g ghui
-ghui</code>
+      <code class="block">npm install -g lazyhub
+lazyhub</code>
     </div>
     <div id="tab-npx" class="tab-panel">
       <code class="block"># No install — runs directly
-npx ghui</code>
+npx lazyhub</code>
     </div>
     <div id="tab-source" class="tab-panel">
       <code class="block">git clone https://github.com/saketh-kowtha/lgh
 cd lgh
 npm install
 npm run build
-node dist/ghui.js</code>
+node dist/lazyhub.js</code>
     </div>
 
     <p style="margin-top:1.5rem;color:var(--muted);font-size:.9rem;">
       Requires <a href="https://nodejs.org">Node.js ≥ 20</a> and the
       <a href="https://cli.github.com">GitHub CLI (<code>gh</code>)</a>.
-      ghui will detect missing dependencies and print platform-specific install instructions.
+      lazyhub will detect missing dependencies and print platform-specific install instructions.
     </p>
   </div>
 </section>
@@ -485,7 +485,7 @@ node dist/ghui.js</code>
 
 <script>
   function copyInstall(btn) {
-    navigator.clipboard.writeText('npm install -g ghui').then(() => {
+    navigator.clipboard.writeText('npm install -g lazyhub').then(() => {
       btn.textContent = 'copied!';
       setTimeout(() => btn.textContent = 'copy', 1800);
     });

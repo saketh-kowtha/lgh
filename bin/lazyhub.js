@@ -1,5 +1,5 @@
 if (process.argv.includes('--mouse')) {
-  process.env.GHUI_MOUSE = '1'
+  process.env.LAZYHUB_MOUSE = '1'
 }
 
 import { bootstrap } from '../src/bootstrap.js'

@@ -14,7 +14,7 @@ const diffRes = await fetch(
     headers: {
       Authorization: `Bearer ${GITHUB_TOKEN}`,
       Accept: 'application/vnd.github.v3.diff',
-      'User-Agent': 'ghui-claude-review',
+      'User-Agent': 'lazyhub-claude-review',
     },
   }
 )
@@ -40,7 +40,7 @@ const diffContent = truncated
 
 // ── 2. Call Claude ────────────────────────────────────────────────────────────
 
-const PROMPT = `You are a senior software engineer reviewing a pull request for **ghui** — a lazygit-style GitHub TUI (Node.js 20+, Ink 4, React 18, execa, gh CLI).
+const PROMPT = `You are a senior software engineer reviewing a pull request for **lazyhub** — a lazygit-style GitHub TUI (Node.js 20+, Ink 4, React 18, execa, gh CLI).
 
 **Architecture rules to enforce:**
 - All \`gh\` CLI calls must go through \`src/executor.js\` only — flag any gh calls elsewhere
@@ -114,11 +114,11 @@ const reviewRes = await fetch(
     headers: {
       Authorization: `Bearer ${GITHUB_TOKEN}`,
       'Content-Type': 'application/json',
-      'User-Agent': 'ghui-claude-review',
+      'User-Agent': 'lazyhub-claude-review',
     },
     body: JSON.stringify({
       event,
-      body: `## Claude Code Review\n\n${reviewText}\n\n---\n*Reviewed by Claude Sonnet 4.6 · [ghui](https://github.com/${REPO})*`,
+      body: `## Claude Code Review\n\n${reviewText}\n\n---\n*Reviewed by Claude Sonnet 4.6 · [lazyhub](https://github.com/${REPO})*`,
     }),
   }
 )

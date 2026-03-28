@@ -22,7 +22,7 @@ export function FormCompose({ title, fields = [], onSubmit, onCancel }) {
 
   const openEditor = useCallback((fieldName) => {
     const editor = process.env.EDITOR || process.env.VISUAL || 'vi'
-    const tmpFile = join(tmpdir(), `ghui-compose-${Date.now()}.md`)
+    const tmpFile = join(tmpdir(), `lazyhub-compose-${Date.now()}.md`)
     writeFileSync(tmpFile, values[fieldName] || '')
     spawnSync(editor, [tmpFile], { stdio: 'inherit' })
     try {

@@ -1,7 +1,7 @@
 /**
  * CustomPane.jsx — generic pane renderer for user-defined tabs.
  *
- * A custom pane is declared in ~/.config/ghui/config.json like:
+ * A custom pane is declared in ~/.config/lazyhub/config.json like:
  *
  *   "customPanes": {
  *     "my-deploys": {

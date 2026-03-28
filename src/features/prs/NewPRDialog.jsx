@@ -307,7 +307,7 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
 
   const openEditor = useCallback(() => {
     const editor = process.env.EDITOR || process.env.VISUAL || 'vi'
-    const tmp = join(tmpdir(), `ghui-pr-body-${Date.now()}.md`)
+    const tmp = join(tmpdir(), `lazyhub-pr-body-${Date.now()}.md`)
     writeFileSync(tmp, form.body || '')
     spawnSync(editor, [tmp], { stdio: 'inherit' })
     try {

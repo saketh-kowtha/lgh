@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Getting Started — ghui</title>
-  <meta name="description" content="Install ghui and learn the keyboard-driven GitHub TUI in minutes." />
+  <title>Getting Started — lazyhub</title>
+  <meta name="description" content="Install lazyhub and learn the keyboard-driven GitHub TUI in minutes." />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -93,7 +93,7 @@
 <body>
 
 <nav>
-  <span class="brand">ghui</span>
+  <span class="brand">lazyhub</span>
   <a href="index.html">Home</a>
   <a href="guide.html" class="active">Guide</a>
   <a href="keybindings.html">Keybindings</a>
@@ -102,7 +102,7 @@
 
 <div class="container">
   <h1>Getting Started</h1>
-  <p class="subtitle">Install ghui and go from zero to productive in under 5 minutes.</p>
+  <p class="subtitle">Install lazyhub and go from zero to productive in under 5 minutes.</p>
 
   <!-- ── Install ──────────────────────────────────────────────────────────── -->
   <h2>1 · Installation</h2>
@@ -110,22 +110,22 @@
   <h3>Prerequisites</h3>
   <ul>
     <li><strong>Node.js 20+</strong> — <code>node --version</code></li>
-    <li><strong>gh CLI</strong> — ghui will guide you through install + login if missing</li>
+    <li><strong>gh CLI</strong> — lazyhub will guide you through install + login if missing</li>
   </ul>
 
-  <h3>Install ghui</h3>
+  <h3>Install lazyhub</h3>
   <pre><span class="comment"># one-time global install (recommended)</span>
-<span class="cmd">npm install -g ghui</span>
+<span class="cmd">npm install -g lazyhub</span>
 
 <span class="comment"># or run without installing</span>
-<span class="cmd">npx ghui</span>
+<span class="cmd">npx lazyhub</span>
 
 <span class="comment"># or from source</span>
 <span class="cmd">git clone https://github.com/saketh-kowtha/lgh &amp;&amp; cd lgh</span>
 <span class="cmd">npm install &amp;&amp; npm start</span></pre>
 
   <div class="tip">
-    <strong>Tip:</strong> After global install, run <code>ghui</code> from any directory that contains a Git repo and it auto-detects the GitHub remote.
+    <strong>Tip:</strong> After global install, run <code>lazyhub</code> from any directory that contains a Git repo and it auto-detects the GitHub remote.
   </div>
 
   <!-- ── First run ─────────────────────────────────────────────────────────── -->
@@ -135,7 +135,7 @@
     <div class="step-num">1</div>
     <div class="step-body">
       <h3>gh detection</h3>
-      <p>ghui checks for the <code>gh</code> CLI. If not found, it prints platform-specific install instructions and exits cleanly — no stack traces.</p>
+      <p>lazyhub checks for the <code>gh</code> CLI. If not found, it prints platform-specific install instructions and exits cleanly — no stack traces.</p>
     </div>
   </div>
 
@@ -143,7 +143,7 @@
     <div class="step-num">2</div>
     <div class="step-body">
       <h3>Login</h3>
-      <p>If not already authenticated, ghui runs <code>gh auth login --web</code>. On headless systems (no browser), it prompts for a Personal Access Token instead.</p>
+      <p>If not already authenticated, lazyhub runs <code>gh auth login --web</code>. On headless systems (no browser), it prompts for a Personal Access Token instead.</p>
     </div>
   </div>
 
@@ -151,7 +151,7 @@
     <div class="step-num">3</div>
     <div class="step-body">
       <h3>Repo detection</h3>
-      <p>Inside a git repo with a GitHub remote? ghui auto-detects it. Outside a repo, it shows an arrow-key picker of your recent GitHub repos.</p>
+      <p>Inside a git repo with a GitHub remote? lazyhub auto-detects it. Outside a repo, it shows an arrow-key picker of your recent GitHub repos.</p>
     </div>
   </div>
 
@@ -167,7 +167,7 @@
   <h2>3 · Interface Layout</h2>
 
   <pre><span class="comment">┌── sidebar 18 ──┬──── list (flex) ────┬── detail 40 ──┐</span>
-<span class="comment">│ ghui           │ ● #42  Fix auth…    │ author        │</span>
+<span class="comment">│ lazyhub           │ ● #42  Fix auth…    │ author        │</span>
 <span class="comment">│                │ ⎇ #41  Add diff…   │ base ← head   │</span>
 <span class="comment">│ ▌ ⎇ Pull Req  │ ● #40  CI: matrix  │ +12 −3 lines  │</span>
 <span class="comment">│   ○ Issues    │                     │               │</span>
@@ -177,7 +177,7 @@
 <span class="comment">└───────────────  footer keys (always visible)         </span></pre>
 
   <ul>
-    <li><strong>Sidebar</strong> — pane navigation, configurable via <code>~/.config/ghui/config.json</code></li>
+    <li><strong>Sidebar</strong> — pane navigation, configurable via <code>~/.config/lazyhub/config.json</code></li>
     <li><strong>List pane</strong> — scrollable list of items for the current pane</li>
     <li><strong>Detail pane</strong> — auto-updates as you navigate the list</li>
     <li>Below <strong>100 cols</strong>: detail panel hides, Enter opens full-screen</li>
@@ -261,7 +261,7 @@
   </ul>
 
   <div class="warn">
-    <strong>Heads up:</strong> ghui requires <code>gh auth login</code> with at minimum <code>repo</code> and <code>read:org</code> scopes. Run <code>gh auth status</code> to check.
+    <strong>Heads up:</strong> lazyhub requires <code>gh auth login</code> with at minimum <code>repo</code> and <code>read:org</code> scopes. Run <code>gh auth status</code> to check.
   </div>
 
   <h2>Next Steps</h2>
@@ -273,7 +273,7 @@
 </div>
 
 <footer>
-  <p>ghui is MIT licensed · <a href="https://github.com/saketh-kowtha/lgh">GitHub</a></p>
+  <p>lazyhub is MIT licensed · <a href="https://github.com/saketh-kowtha/lgh">GitHub</a></p>
 </footer>
 
 </body>

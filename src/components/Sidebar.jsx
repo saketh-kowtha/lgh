@@ -52,7 +52,7 @@ export function Sidebar({ currentPane, onSelect, height, visiblePanes, paneLabel
       height={height}
     >
       <Box paddingX={1} marginBottom={1}>
-        <Text color={t.ui.selected} bold>ghui</Text>
+        <Text color={t.ui.selected} bold>lazyhub</Text>
       </Box>
 
       {allItems.map(({ pane, icon, label }) => {
