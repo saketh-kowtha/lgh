@@ -78,7 +78,7 @@ function resolveTheme(cfg) {
 
   // String: either a built-in name or a file path
   if (typeof cfg === 'string') {
-    if (BUILTIN_THEMES[cfg]) return BUILTIN_THEMES[cfg]
+    if (BUILTIN_THEMES[cfg]) return deepMerge(fallback, BUILTIN_THEMES[cfg])
     const fromFile = loadThemeFile(cfg)
     return fromFile ? deepMerge(fallback, fromFile) : fallback
   }
@@ -88,7 +88,7 @@ function resolveTheme(cfg) {
     // { name, overrides } form
     if (typeof cfg.name === 'string') {
       const namedBase = BUILTIN_THEMES[cfg.name] || fallback
-      return deepMerge(namedBase, cfg.overrides || {})
+      return deepMerge(deepMerge(fallback, namedBase), cfg.overrides || {})
     }
     // Legacy: plain overrides object applied on top of github-dark
     return deepMerge(fallback, cfg)

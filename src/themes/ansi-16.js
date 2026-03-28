@@ -31,5 +31,22 @@ export default {
     file:     'cyan',
     hunk:     'magenta',
     ctxFg:    'white',
+  },
+  syntax: {
+    keyword:  'magenta',
+    string:   'green',
+    comment:  'grey',
+    number:   'yellow',
+    fn:       'blue',
+    builtin:  'cyan',
+    variable: 'white',
+    type:     'cyan',
+    operator: 'white',
+    tag:      'blue',
+    attr:     'yellow',
+    literal:  'yellow',
+    meta:     'grey',
+    regexp:   'red',
+    default:  'white',
   }
 }
