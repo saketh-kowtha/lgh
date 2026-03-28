@@ -13,6 +13,8 @@ export function resolvePath(p) {
   return join(process.cwd(), p)
 }
 import { t } from './theme.js'
+import chalk from 'chalk'
+import hljs from 'highlight.js'
 
 /**
  * src/utils.js — shared utility functions
@@ -35,8 +37,47 @@ export function sanitize(str) {
   return stripAnsi(str || '')
 }
 
-import hljs from 'highlight.js'
-import chalk from 'chalk'
+/**
+ * Safely applies a color (hex or keyword) to a chalk instance.
+ */
+export function colorChalk(color) {
+  if (!color) return (s) => s
+  if (color.startsWith('#')) return chalk.hex(color)
+  if (typeof chalk[color] === 'function') return chalk[color]
+  return chalk.keyword(color)
+}
+
+/**
+ * Safely applies a background color (hex or keyword) to a chalk instance.
+ */
+export function bgColorChalk(color) {
+  if (!color) return (s) => s
+  if (color.startsWith('#')) return chalk.bgHex(color)
+  const bgName = 'bg' + color.charAt(0).toUpperCase() + color.slice(1).replace('grey', 'Gray')
+  if (typeof chalk[bgName] === 'function') return chalk[bgName]
+  return chalk.bgKeyword(color)
+}
+
+/**
+ * Safely applies foreground and background colors (hex or keyword) to a string using chalk.
+ */
+export function applyThemeStyle(text, fg, bg) {
+  let s = chalk
+  if (fg) {
+    if (fg.startsWith('#')) s = s.hex(fg)
+    else if (typeof s[fg] === 'function') s = s[fg]
+    else s = s.keyword(fg)
+  }
+  if (bg) {
+    if (bg.startsWith('#')) s = s.bgHex(bg)
+    else {
+      const bgName = 'bg' + bg.charAt(0).toUpperCase() + bg.slice(1).replace('grey', 'Gray')
+      if (typeof s[bgName] === 'function') s = s[bgName]
+      else s = s.bgKeyword(bg)
+    }
+  }
+  return s(text)
+}
 
 /**
  * Maps highlight.js scope names to chalk styles for TUI rendering.
@@ -71,9 +112,10 @@ function highlightCode(code, lang) {
 }
 
 export function getMarkdownRows(text, maxWidth = 80) {
-  if (!text) return []
+  const safeText = String(text || '')
+  if (!safeText) return []
 
-  const lines = text.split('\n')
+  const lines = safeText.split('\n')
   const rows = []
   let inCodeBlock = false
   let codeBuffer = []
@@ -154,7 +196,9 @@ export function getMarkdownRows(text, maxWidth = 80) {
 }
 
 function wrapLine(text, width) {
-  const words = text.split(' ')
+  const safeText = String(text || '')
+  if (width <= 0) return [safeText]
+  const words = safeText.split(' ')
   const lines = []
   let currentLine = ''
 
@@ -171,8 +215,9 @@ function wrapLine(text, width) {
 }
 
 function renderInline(text) {
+  const safeText = String(text || '')
   // Simple regex for bold and italic
-  let parts = [text]
+  let parts = [safeText]
   
   // Bold **text**
   const boldRegex = /\*\*(.*?)\*\*/g
@@ -183,7 +228,7 @@ function renderInline(text) {
 
   // This is a very basic inline renderer. For a production TUI, 
   // we'd use a real Markdown AST parser.
-  return text.split(/(`.*?`|\*\*.*?\*\*|\*.*?\*)/g).map((part, i) => {
+  return safeText.split(/(`.*?`|\*\*.*?\*\*|\*.*?\*)/g).map((part, i) => {
     if (part.startsWith('`') && part.endsWith('`')) {
       return <Text key={i} color={t.ci.pending} backgroundColor={t.ui.headerBg}> {part.slice(1, -1)} </Text>
     }
@@ -200,13 +245,14 @@ function renderInline(text) {
 /**
  * A basic text input component with cursor support and common shortcuts.
  */
-export function TextInput({ value, onChange, placeholder, focus, mask, onEnter }) {
-  const [cursor, setCursor] = useState(value?.length || 0)
+export function TextInput({ value = '', onChange, placeholder, focus, mask, onEnter }) {
+  const safeValue = String(value || '')
+  const [cursor, setCursor] = useState(safeValue.length)
 
   // Sync cursor if value changes externally
   useEffect(() => {
-    if (cursor > value?.length) setCursor(value?.length || 0)
-  }, [value, cursor])
+    if (cursor > safeValue.length) setCursor(safeValue.length)
+  }, [safeValue, cursor])
 
   useInput((input, key) => {
     if (!focus) return
@@ -221,7 +267,7 @@ export function TextInput({ value, onChange, placeholder, focus, mask, onEnter }
       return
     }
     if (key.rightArrow) {
-      setCursor(c => Math.min(value.length, c + 1))
+      setCursor(c => Math.min(safeValue.length, c + 1))
       return
     }
 
@@ -230,43 +276,43 @@ export function TextInput({ value, onChange, placeholder, focus, mask, onEnter }
       return
     }
     if (key.ctrl && input === 'e') { // Ctrl+E: end of line
-      setCursor(value.length)
+      setCursor(safeValue.length)
       return
     }
     if (key.ctrl && input === 'u') { // Ctrl+U: clear line
-      onChange('')
+      if (onChange) onChange('')
       setCursor(0)
       return
     }
     if (key.ctrl && input === 'k') { // Ctrl+K: clear to end of line
-      onChange(value.slice(0, cursor))
+      if (onChange) onChange(safeValue.slice(0, cursor))
       return
     }
 
     if (key.backspace || key.delete) {
       if (cursor > 0) {
-        const nextValue = value.slice(0, cursor - 1) + value.slice(cursor)
-        onChange(nextValue)
+        const nextValue = safeValue.slice(0, cursor - 1) + safeValue.slice(cursor)
+        if (onChange) onChange(nextValue)
         setCursor(c => c - 1)
       }
       return
     }
 
     if (input && !key.ctrl && !key.meta) {
-      const nextValue = value.slice(0, cursor) + input + value.slice(cursor)
-      onChange(nextValue)
+      const nextValue = safeValue.slice(0, cursor) + input + safeValue.slice(cursor)
+      if (onChange) onChange(nextValue)
       setCursor(c => c + input.length)
     }
   })
 
-  const renderedValue = mask ? mask.repeat(value.length) : value
+  const renderedValue = mask ? mask.repeat(safeValue.length) : safeValue
   const beforeCursor = renderedValue.slice(0, cursor)
   const atCursor = renderedValue.slice(cursor, cursor + 1) || ' '
   const afterCursor = renderedValue.slice(cursor + 1)
 
   return (
     <Box>
-      {value.length === 0 && !focus ? (
+      {safeValue.length === 0 && !focus ? (
         <Text color={t.ui.dim}>{placeholder}</Text>
       ) : (
         <Box>

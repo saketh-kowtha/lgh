@@ -133,8 +133,12 @@ function mergeSection(defaults, user) {
   const merged = { ...defaults }
   for (const [k, v] of Object.entries(user)) {
     if (k in defaults) {
-      if (typeof defaults[k] === 'object' && !Array.isArray(defaults[k]) && typeof v === 'object' && !Array.isArray(v)) {
-        merged[k] = { ...defaults[k], ...v }
+      if (Array.isArray(defaults[k])) {
+        if (Array.isArray(v)) merged[k] = v
+      } else if (typeof defaults[k] === 'object' && defaults[k] !== null) {
+        if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+          merged[k] = { ...defaults[k], ...v }
+        }
       } else if (typeof v === typeof defaults[k]) {
         merged[k] = v
       }

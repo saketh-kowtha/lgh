@@ -19,7 +19,7 @@ import { FooterKeys } from '../../components/FooterKeys.jsx'
 import { loadConfig } from '../../config.js'
 import { useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
-import { TextInput } from '../../utils.js'
+import { TextInput, colorChalk, bgColorChalk, applyThemeStyle } from '../../utils.js'
 
 const _diffCfg = loadConfig().diff
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
@@ -85,7 +85,7 @@ function htmlToChalk(html, bgColor, t) {
         .replace(/&#39;/g, "'")
       if (text) {
         const fg = colorStack.filter(Boolean).at(-1) || t.syntax.default
-        parts.push(bgColor ? chalk.bgHex(bgColor).hex(fg)(text) : chalk.hex(fg)(text))
+        parts.push(applyThemeStyle(text, fg, bgColor))
       }
       i = end === -1 ? html.length : end
       continue
@@ -111,17 +111,13 @@ function htmlToChalk(html, bgColor, t) {
 
 function syntaxHighlight(code, lang, bgColor, t) {
   if (!lang) {
-    return bgColor
-      ? chalk.bgHex(bgColor).hex(t.syntax.default)(code)
-      : chalk.hex(t.syntax.default)(code)
+    return applyThemeStyle(code, t.syntax.default, bgColor)
   }
   try {
     const { value } = hljs.highlight(code, { language: lang, ignoreIllegals: true })
     return htmlToChalk(value, bgColor, t)
   } catch {
-    return bgColor
-      ? chalk.bgHex(bgColor).hex(t.syntax.default)(code)
-      : chalk.hex(t.syntax.default)(code)
+    return applyThemeStyle(code, t.syntax.default, bgColor)
   }
 }
 
@@ -246,9 +242,9 @@ function buildTreeRows(files) {
 const DiffLine = React.memo(({ row, isSelected, lang, isMatch, t }) => {
   let cur
   if (isSelected) {
-    cur = chalk.bgHex(t.diff.cursorBg).hex('#ffffff').bold('▶')
+    cur = applyThemeStyle('▶', '#ffffff', t.diff.cursorBg)
   } else if (isMatch) {
-    cur = chalk.hex('#e3b341')('◆')
+    cur = colorChalk('#e3b341')('◆')
   } else {
     cur = ' '
   }
@@ -258,19 +254,17 @@ const DiffLine = React.memo(({ row, isSelected, lang, isMatch, t }) => {
 
   if (row.type === 'file-header') {
     const line =
-      chalk.hex(t.ui.selected).bold(`━━ ${row.filename} `) +
-      chalk.hex(t.ci.pass)(`+${row.addCount}`) +
-      chalk.hex(t.syntax.default)(' / ') +
-      chalk.hex(t.ci.fail)(`-${row.delCount}`)
+      colorChalk(t.ui.selected).bold(`━━ ${row.filename} `) +
+      colorChalk(t.ci.pass)(`+${row.addCount}`) +
+      colorChalk(t.syntax.default)(' / ') +
+      colorChalk(t.ci.fail)(`-${row.delCount}`)
     return <Text wrap="truncate">{cur + line}</Text>
   }
 
   if (row.type === 'hunk') {
     return (
       <Text wrap="truncate">
-        {cur + chalk.bgHex(t.diff.hunkBg).hex(t.diff.hunkFg)(
-          `${gutterOld}${gutterNew}   ${row.text}`
-        )}
+        {cur + applyThemeStyle(`${gutterOld}${gutterNew}   ${row.text}`, t.diff.hunkFg, t.diff.hunkBg)}
       </Text>
     )
   }
@@ -278,21 +272,21 @@ const DiffLine = React.memo(({ row, isSelected, lang, isMatch, t }) => {
   if (row.type === 'add') {
     const signFg = isSelected ? '#ffffff' : t.diff.addSign
     const sign   = isSelected ? '▶' : '+'
-    const gutter = chalk.bgHex(t.diff.addBg).hex(signFg)(`${gutterOld}${gutterNew} ${sign} `)
+    const gutter = applyThemeStyle(`${gutterOld}${gutterNew} ${sign} `, signFg, t.diff.addBg)
     return <Text wrap="truncate">{cur + gutter + syntaxHighlight(row.text, lang, t.diff.addBg, t)}</Text>
   }
 
   if (row.type === 'del') {
     const signFg = isSelected ? '#ffffff' : t.diff.delSign
     const sign   = isSelected ? '▶' : '-'
-    const gutter = chalk.bgHex(t.diff.delBg).hex(signFg)(`${gutterOld}${gutterNew} ${sign} `)
+    const gutter = applyThemeStyle(`${gutterOld}${gutterNew} ${sign} `, signFg, t.diff.delBg)
     return <Text wrap="truncate">{cur + gutter + syntaxHighlight(row.text, lang, t.diff.delBg, t)}</Text>
   }
 
   // ctx — highlight the full gutter+code with cursor bg when selected
   const bgGutter = isSelected
-    ? chalk.bgHex(t.diff.cursorBg).hex(t.ui.selected)(`${gutterOld}${gutterNew}   `)
-    : chalk.hex(t.ui.dim)(`${gutterOld}${gutterNew}   `)
+    ? applyThemeStyle(`${gutterOld}${gutterNew}   `, t.ui.selected, t.diff.cursorBg)
+    : colorChalk(t.ui.dim)(`${gutterOld}${gutterNew}   `)
   const code = syntaxHighlight(row.text, lang, isSelected ? t.diff.cursorBg : null, t)
   return <Text wrap="truncate">{cur + bgGutter + code}</Text>
 })
@@ -427,8 +421,8 @@ function renderSplitView(rows, scrollOffset, visibleHeight, cursor, langCache, c
     if (row.type === 'ctx') {
       const lang = langCache.get(row.filename)
       const code = syntaxHighlight(row.text, lang, null, t)
-      const gutter = chalk.hex(t.ui.dim)(`${String(row.oldLine ?? '').padStart(4)}${String(row.newLine ?? '').padStart(4)}   `)
-      const line = isSelected ? chalk.bgHex(t.diff.cursorBg)(gutter + code) : gutter + code
+      const gutter = colorChalk(t.ui.dim)(`${String(row.oldLine ?? '').padStart(4)}${String(row.newLine ?? '').padStart(4)}   `)
+      const line = isSelected ? applyThemeStyle(gutter + code, null, t.diff.cursorBg) : gutter + code
       result.push(
         <Box key={idx}>
           <Box width={colWidth} overflow="hidden"><Text wrap="truncate">{line}</Text></Box>
@@ -445,14 +439,14 @@ function renderSplitView(rows, scrollOffset, visibleHeight, cursor, langCache, c
       const nextRow = slice[i + 1]
       const lang = langCache.get(row.filename)
 
-      const delGutter = chalk.bgHex(t.diff.delBg).hex(t.diff.delSign)(`${String(row.oldLine ?? '').padStart(4)}     - `)
+      const delGutter = applyThemeStyle(`${String(row.oldLine ?? '').padStart(4)}     - `, t.diff.delSign, t.diff.delBg)
       const delCode   = syntaxHighlight(row.text, lang, t.diff.delBg, t)
-      const delLine   = isSelected ? chalk.bgHex(t.diff.cursorBg)(delGutter + delCode) : delGutter + delCode
+      const delLine   = isSelected ? applyThemeStyle(delGutter + delCode, null, t.diff.cursorBg) : delGutter + delCode
 
       if (nextRow && nextRow.type === 'add') {
-        const addGutter = chalk.bgHex(t.diff.addBg).hex(t.diff.addSign)(`    ${String(nextRow.newLine ?? '').padStart(4)} + `)
+        const addGutter = applyThemeStyle(`    ${String(nextRow.newLine ?? '').padStart(4)} + `, t.diff.addSign, t.diff.addBg)
         const addCode   = syntaxHighlight(nextRow.text, langCache.get(nextRow.filename), t.diff.addBg, t)
-        const addLine   = isSelected ? chalk.bgHex(t.diff.cursorBg)(addGutter + addCode) : addGutter + addCode
+        const addLine   = isSelected ? applyThemeStyle(addGutter + addCode, null, t.diff.cursorBg) : addGutter + addCode
 
         result.push(
           <Box key={idx}>
@@ -479,9 +473,9 @@ function renderSplitView(rows, scrollOffset, visibleHeight, cursor, langCache, c
     if (row.type === 'add') {
       // Unpaired add (del was already consumed or not present before)
       const lang = langCache.get(row.filename)
-      const addGutter = chalk.bgHex(t.diff.addBg).hex(t.diff.addSign)(`    ${String(row.newLine ?? '').padStart(4)} + `)
+      const addGutter = applyThemeStyle(`    ${String(row.newLine ?? '').padStart(4)} + `, t.diff.addSign, t.diff.addBg)
       const addCode   = syntaxHighlight(row.text, lang, t.diff.addBg, t)
-      const addLine   = isSelected ? chalk.bgHex(t.diff.cursorBg)(addGutter + addCode) : addGutter + addCode
+      const addLine   = isSelected ? applyThemeStyle(addGutter + addCode, null, t.diff.cursorBg) : addGutter + addCode
 
       result.push(
         <Box key={idx}>

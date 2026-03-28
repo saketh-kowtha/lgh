@@ -17,8 +17,6 @@ import { render, Box, Text, useInput, useApp, useStdout } from 'ink'
 import { ThemeProvider, useTheme, readRawThemeCfg } from './theme.js'
 import { loadConfig } from './config.js'
 import { AppContext } from './context.js'
-
-const _config = loadConfig()
 import { Sidebar } from './components/Sidebar.jsx'
 import { StatusBar } from './components/StatusBar.jsx'
 import { FooterKeys } from './components/FooterKeys.jsx'
@@ -33,6 +31,8 @@ import { ActionList } from './features/actions/index.jsx'
 import { SettingsPane } from './features/settings/index.jsx'
 import { NotificationList } from './features/notifications/index.jsx'
 import { CustomPane } from './components/CustomPane.jsx'
+
+const _config = loadConfig()
 
 // ─── Pane registry ───────────────────────────────────────────────────────────
 
