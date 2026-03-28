@@ -15,6 +15,11 @@ export function SettingsPane({ onBack }) {
   const [cursor, setCursor] = useState(0)
   const [dialog, setDialog] = useState(null)
 
+  React.useEffect(() => {
+    notifyDialog(!!dialog)
+    return () => notifyDialog(false)
+  }, [dialog, notifyDialog])
+
   const OPTIONS = [
     { id: 'theme', label: 'Theme', value: themeName },
     { id: 'mouse', label: 'Mouse Support', value: config.mouse ? 'Enabled' : 'Disabled' },
@@ -81,6 +86,7 @@ export function SettingsPane({ onBack }) {
 }
 
 function ThemePicker({ current, onSelect, onCancel }) {
+  const { t } = useTheme()
   const [cursor, setCursor] = useState(THEME_NAMES.indexOf(current) || 0)
 
   useInput((input, key) => {
