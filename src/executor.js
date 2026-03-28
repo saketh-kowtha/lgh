@@ -126,6 +126,14 @@ export async function mergePR(repo, number, strategy = 'merge', commitMessage) {
 }
 
 /**
+ * Close (not merge) a pull request.
+ */
+export async function closePR(repo, number) {
+  const args = ['pr', 'close', String(number), '--repo', getRepo(repo)]
+  return run(args)
+}
+
+/**
  * Create a PR review (approve or request-changes).
  */
 export async function reviewPR(repo, number, event, body = '') {

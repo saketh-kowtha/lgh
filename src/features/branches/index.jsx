@@ -72,14 +72,7 @@ export function BranchList({ repo, listHeight = 10, onPaneState }) {
     if (loading || items.length === 0) return
 
     if (input === ' ' || key.return) {
-      if (selectedBranch) {
-        // Use git checkout for branches (not PR checkout)
-        import('execa').then(({ execa }) => {
-          execa('git', ['checkout', selectedBranch.name], { cwd: process.cwd() })
-            .then(() => showStatus(`Checked out ${selectedBranch.name}`))
-            .catch(err => showStatus(`Failed: ${err.message}`, true))
-        })
-      }
+      if (selectedBranch) setDialog('checkout')
       return
     }
 
@@ -111,6 +104,32 @@ export function BranchList({ repo, listHeight = 10, onPaneState }) {
             const idx = items.findIndex(b => b.name === item.name)
             if (idx !== -1) { setCursor(idx); setScrollOffset(Math.max(0, idx - 2)) }
             setDialog(null)
+          }}
+          onCancel={() => setDialog(null)}
+        />
+      </Box>
+    )
+  }
+
+  if (dialog === 'checkout' && selectedBranch) {
+    const isCurrent = selectedBranch.name === currentBranch
+    return (
+      <Box flexDirection="column" flexGrow={1}>
+        <ConfirmDialog
+          message={isCurrent
+            ? `"${selectedBranch.name}" is already your current branch.`
+            : `Checkout branch "${selectedBranch.name}"?`}
+          destructive={false}
+          onConfirm={async () => {
+            setDialog(null)
+            if (isCurrent) return
+            try {
+              const { execa } = await import('execa')
+              await execa('git', ['checkout', selectedBranch.name], { cwd: process.cwd() })
+              showStatus(`✓ Checked out ${selectedBranch.name}`)
+            } catch (err) {
+              showStatus(`Failed: ${err.message}`, true)
+            }
           }}
           onCancel={() => setDialog(null)}
         />

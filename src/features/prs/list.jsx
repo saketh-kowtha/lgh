@@ -16,7 +16,7 @@ import { format } from 'timeago.js'
 import { useGh } from '../../hooks/useGh.js'
 import {
   listPRs, listLabels, listCollaborators,
-  mergePR, checkoutBranch, addLabels, removeLabels,
+  mergePR, closePR, checkoutBranch, addLabels, removeLabels,
   requestReviewers, reviewPR, createPR, getRepoInfo,
 } from '../../executor.js'
 import { FuzzySearch } from '../../components/dialogs/FuzzySearch.jsx'
@@ -71,6 +71,7 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
   const [cursor, setCursor] = useState(0)
   const [scrollOffset, setScrollOffset] = useState(0)
   const [dialog, setDialog] = useState(null)
+  const [mergeOptions, setMergeOptions] = useState(null)
   const [statusMsg, setStatusMsg] = useState(null)
   const lastKeyRef   = useRef(null)
   const lastKeyTimer = useRef(null)
@@ -183,13 +184,9 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
     if (input === 'R') { openDialog('reviewers'); return }
     if (input === 'a') { openDialog('approve-body'); return }
     if (input === 'x') { openDialog('reqchanges-body'); return }
+    if (input === 'X') { openDialog('close-pr'); return }
 
-    if (input === 'c') {
-      checkoutBranch(repo, pr.number)
-        .then(() => showStatus(`✓ Checked out PR #${pr.number}`))
-        .catch(err => showStatus(`✗ Checkout: ${err.message}`, true))
-      return
-    }
+    if (input === 'c') { openDialog('checkout'); return }
 
     // y — copy PR URL to clipboard
     if (input === 'y' && pr.url) {
@@ -241,16 +238,69 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
         title={`Merge PR #${selectedPR.number}: ${selectedPR.title}`}
         options={MERGE_OPTIONS}
         promptText="Commit message (optional, Enter to skip)"
-        onSubmit={async (val) => {
+        onSubmit={(val) => {
           const strategy = typeof val === 'object' ? val.value : val
-          const msg = typeof val === 'object' ? val.text : undefined
+          const msg      = typeof val === 'object' ? val.text  : undefined
+          setMergeOptions({ strategy, msg })
+          setDialog('merge-confirm')
+        }}
+        onCancel={closeDialog}
+      />
+    )
+  }
+
+  if (dialog === 'merge-confirm' && selectedPR && mergeOptions) {
+    return (
+      <ConfirmDialog
+        message={`Merge PR #${selectedPR.number} via --${mergeOptions.strategy}?${mergeOptions.msg ? `\nMessage: "${mergeOptions.msg}"` : ''}`}
+        destructive={true}
+        onConfirm={async () => {
           closeDialog()
           try {
-            await mergePR(repo, selectedPR.number, strategy, msg)
+            await mergePR(repo, selectedPR.number, mergeOptions.strategy, mergeOptions.msg)
             showStatus(`✓ Merged PR #${selectedPR.number}`)
             refetch()
           } catch (err) {
             showStatus(`✗ Merge failed: ${err.message}`, true)
+          }
+        }}
+        onCancel={closeDialog}
+      />
+    )
+  }
+
+  if (dialog === 'checkout' && selectedPR) {
+    return (
+      <ConfirmDialog
+        message={`Checkout branch "${selectedPR.headRefName}" from PR #${selectedPR.number}?`}
+        destructive={false}
+        onConfirm={async () => {
+          closeDialog()
+          try {
+            await checkoutBranch(repo, selectedPR.number)
+            showStatus(`✓ Checked out ${selectedPR.headRefName}`)
+          } catch (err) {
+            showStatus(`✗ Checkout: ${err.message}`, true)
+          }
+        }}
+        onCancel={closeDialog}
+      />
+    )
+  }
+
+  if (dialog === 'close-pr' && selectedPR) {
+    return (
+      <ConfirmDialog
+        message={`Close PR #${selectedPR.number}: ${selectedPR.title}?`}
+        destructive={true}
+        onConfirm={async () => {
+          closeDialog()
+          try {
+            await closePR(repo, selectedPR.number)
+            showStatus(`Closed PR #${selectedPR.number}`)
+            refetch()
+          } catch (err) {
+            showStatus(`Failed: ${err.message}`, true)
           }
         }}
         onCancel={closeDialog}

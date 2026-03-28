@@ -468,16 +468,25 @@ export function App({ repo }) {
     return (
       <AppContext.Provider value={appCtx}>
         <Box
+          height={rows}
           flexDirection="column"
-          borderStyle="round"
-          borderColor={t.ui.selected}
-          margin={1}
+          justifyContent="center"
+          alignItems="center"
+          overflow="hidden"
         >
-          <HelpOverlay
-            pane={pane}
-            view={view}
-            onClose={() => setShowHelp(false)}
-          />
+          <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={t.ui.selected}
+            paddingX={2}
+            paddingY={1}
+          >
+            <HelpOverlay
+              pane={pane}
+              view={view}
+              onClose={() => setShowHelp(false)}
+            />
+          </Box>
         </Box>
       </AppContext.Provider>
     )
