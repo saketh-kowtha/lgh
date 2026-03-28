@@ -37,6 +37,10 @@ export function FormCompose({ title, fields = [], onSubmit, onCancel }) {
   useInput((input, key) => {
     if (key.escape) { onCancel(); return }
 
+    if (key.tab && key.shift) {
+      setActiveField(f => (f - 1 + fields.length) % fields.length)
+      return
+    }
     if (key.tab) {
       setActiveField(f => (f + 1) % fields.length)
       return

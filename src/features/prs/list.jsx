@@ -17,13 +17,14 @@ import { useGh } from '../../hooks/useGh.js'
 import {
   listPRs, listLabels, listCollaborators,
   mergePR, closePR, checkoutBranch, addLabels, removeLabels,
-  requestReviewers, reviewPR, createPR, getRepoInfo,
+  requestReviewers, reviewPR, getRepoInfo,
 } from '../../executor.js'
 import { FuzzySearch } from '../../components/dialogs/FuzzySearch.jsx'
 import { MultiSelect } from '../../components/dialogs/MultiSelect.jsx'
 import { OptionPicker } from '../../components/dialogs/OptionPicker.jsx'
 import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog.jsx'
 import { FormCompose } from '../../components/dialogs/FormCompose.jsx'
+import { NewPRDialog } from './NewPRDialog.jsx'
 import { AppContext } from '../../app.jsx'
 import { t } from '../../theme.js'
 
@@ -341,26 +342,11 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
 
   if (dialog === 'new-pr') {
     return (
-      <Box flexDirection="column" flexGrow={1}>
-        <FormCompose
-          title="New Pull Request"
-          fields={[
-            { name: 'title', label: 'Title', type: 'text' },
-            { name: 'head', label: 'Head branch', type: 'text' },
-            { name: 'base', label: 'Base branch', type: 'text' },
-            { name: 'body', label: 'Body', type: 'multiline' },
-          ]}
-          onSubmit={async (values) => {
-            closeDialog()
-            try {
-              await createPR(repo, { title: values.title, head: values.head, base: values.base, body: values.body })
-              showStatus('PR created')
-              refetch()
-            } catch (err) {
-              showStatus(`Failed: ${err.message}`, true)
-            }
-          }}
-          onCancel={closeDialog}
+      <Box flexDirection="column" flexGrow={1} paddingY={1} paddingX={1}>
+        <NewPRDialog
+          repo={repo}
+          onClose={closeDialog}
+          onCreated={() => { showStatus('✓ PR created'); refetch() }}
         />
       </Box>
     )

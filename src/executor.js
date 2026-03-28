@@ -484,6 +484,79 @@ export async function resolveThread(threadId) {
 }
 
 /**
+ * Get a single remote branch (returns null if not found).
+ */
+export async function getRemoteBranch(repo, branch) {
+  if (!branch) return null
+  try {
+    return await run(['api', `repos/${getRepo(repo)}/branches/${encodeURIComponent(branch)}`])
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Compare two refs: how many commits head is ahead/behind base on GitHub.
+ * Returns { ahead_by, behind_by, commits: [{sha, commit:{message}}] } or null.
+ */
+export async function compareBranches(repo, base, head) {
+  if (!base || !head) return null
+  try {
+    return await run(['api', `repos/${getRepo(repo)}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`])
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get local commits on `branch` not yet pushed to origin/branch.
+ * Returns array of {sha, message} or null if origin/branch doesn't exist.
+ */
+export async function getUnpushedCommits(branch) {
+  if (!branch) return []
+  try {
+    const result = await execa('git', [
+      'log', `origin/${branch}..${branch}`,
+      '--pretty=format:%h\t%s',
+    ], { cwd: process.cwd(), reject: false })
+    if (result.exitCode !== 0) return null  // remote tracking branch absent
+    if (!result.stdout.trim()) return []
+    return result.stdout.trim().split('\n').map(line => {
+      const tab = line.indexOf('\t')
+      return { sha: line.slice(0, tab), message: line.slice(tab + 1) }
+    })
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get the current local git branch name.
+ */
+export async function getCurrentBranch() {
+  try {
+    const result = await execa('git', ['branch', '--show-current'], { cwd: process.cwd() })
+    return result.stdout.trim() || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Push a branch to origin.
+ */
+export async function pushBranch(branch) {
+  const result = await execa('git', ['push', 'origin', branch], {
+    cwd: process.cwd(),
+    reject: false,
+  })
+  if (result.exitCode !== 0) {
+    throw new Error((result.stderr || 'git push failed').split('\n')[0].trim())
+  }
+  return result.stdout
+}
+
+/**
  * Create a new PR.
  */
 export async function createPR(repo, { title, body, head, base, draft = false, labels = [], assignees = [], reviewers = [] } = {}) {
