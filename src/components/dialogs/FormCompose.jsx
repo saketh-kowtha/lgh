@@ -29,7 +29,8 @@ export function FormCompose({ title, fields = [], onSubmit, onCancel }) {
       tmpDir = mkdtempSync(join(tmpdir(), 'lazyhub-'))
       const tmpFile = join(tmpDir, 'compose.md')
       writeFileSync(tmpFile, values[fieldName] || '', { mode: 0o600 })
-      spawnSync(editorBin, [...editorArgs, tmpFile], { stdio: 'inherit' })
+      const result = spawnSync(editorBin, [...editorArgs, tmpFile], { stdio: 'inherit' })
+      if (result.status !== 0) return
       const content = readFileSync(tmpFile, 'utf8')
       setValues(prev => ({ ...prev, [fieldName]: content }))
     } catch {

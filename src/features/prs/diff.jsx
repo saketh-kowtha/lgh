@@ -1028,7 +1028,7 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
               paddingX={1} marginX={1}>
               <Text color={t.ci.fail} bold>Delete comment?</Text>
               <Text color={t.ui.dim} wrap="truncate">  "{stripAnsi(compose.commentBody || '').slice(0, 70)}"</Text>
-              <Text color={t.ui.dim}>[y] confirm  [Esc] cancel</Text>
+              <Text color={t.ui.dim}>[y] confirm  [n / Esc] cancel</Text>
             </Box>
           )
         }

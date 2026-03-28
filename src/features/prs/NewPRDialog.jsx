@@ -314,7 +314,8 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
       tmpDir = mkdtempSync(join(tmpdir(), 'lazyhub-'))
       const tmp = join(tmpDir, 'pr-body.md')
       writeFileSync(tmp, form.body || '', { mode: 0o600 })
-      spawnSync(editorBin, [...editorArgs, tmp], { stdio: 'inherit' })
+      const result = spawnSync(editorBin, [...editorArgs, tmp], { stdio: 'inherit' })
+      if (result.status !== 0) return
       const content = readFileSync(tmp, 'utf8')
       setForm(f => ({ ...f, body: content }))
     } catch { /* ignore */ }

@@ -97,7 +97,8 @@ export function PRComments({ prNumber, repo, onBack, onJumpToDiff }) {
       tmpDir = mkdtempSync(join(tmpdir(), 'lazyhub-'))
       const tmp = join(tmpDir, 'comment.md')
       writeFileSync(tmp, initial || '', { mode: 0o600 })
-      spawnSync(editorBin, [...editorArgs, tmp], { stdio: 'inherit' })
+      const result = spawnSync(editorBin, [...editorArgs, tmp], { stdio: 'inherit' })
+      if (result.status !== 0) return initial
       const content = readFileSync(tmp, 'utf8')
       return content
     } catch { return initial }
@@ -110,27 +111,25 @@ export function PRComments({ prNumber, repo, onBack, onJumpToDiff }) {
     const { type, comment } = action
     const body = actionText.trim()
 
+    const done = () => { setAction(null); setActionText('') }
+
     if (type === 'reply') {
-      if (!body) { setAction(null); setActionText(''); return }
-      // Use root comment id for the reply
+      if (!body) { done(); return }
       const rootId = comment._isRoot ? comment.id : comment._rootId
-      if (!rootId) { flash('Cannot determine thread root'); setAction(null); setActionText(''); return }
+      if (!rootId) { flash('Cannot determine thread root'); done(); return }
       replyToComment(repo, prNumber, rootId, body)
-        .then(() => { flash('Reply sent'); refetch() })
+        .then(() => { flash('Reply sent'); done(); refetch() })
         .catch(err => flash(`Failed: ${err.message}`))
     } else if (type === 'edit') {
-      if (!body) { setAction(null); setActionText(''); return }
+      if (!body) { done(); return }
       editPRComment(repo, comment.id, body)
-        .then(() => { flash('Comment updated'); refetch() })
+        .then(() => { flash('Comment updated'); done(); refetch() })
         .catch(err => flash(`Failed: ${err.message}`))
     } else if (type === 'delete') {
       deletePRComment(repo, comment.id)
-        .then(() => { flash('Comment deleted'); refetch() })
+        .then(() => { flash('Comment deleted'); done(); refetch() })
         .catch(err => flash(`Failed: ${err.message}`))
     }
-
-    setAction(null)
-    setActionText('')
   }, [action, actionText, repo, prNumber, flash, refetch])
 
   // ── Keyboard ──────────────────────────────────────────────────────────────
