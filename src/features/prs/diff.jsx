@@ -910,7 +910,8 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
     // e/d — edit/delete on thread at cursor line (no fallback action)
     if (input === 'e' || input === 'd') {
       const row = rows[cursor]
-      const lineNum = row ? (row.newLine ?? row.oldLine) : null
+      const isCodeRow = row && row.type !== 'file-header' && row.filename
+      const lineNum = isCodeRow ? (row.newLine ?? row.oldLine) : null
       const lineKey = lineNum != null ? `${row.filename}:${lineNum}` : null
       const lineComments = lineKey ? commentsByLine.get(lineKey) : null
       if (lineComments?.length) {
@@ -928,7 +929,8 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
     // r — reply on thread at cursor line, or refetch if no thread there
     if (input === 'r') {
       const row = rows[cursor]
-      const lineNum = row ? (row.newLine ?? row.oldLine) : null
+      const isCodeRow = row && row.type !== 'file-header' && row.filename
+      const lineNum = isCodeRow ? (row.newLine ?? row.oldLine) : null
       const lineKey = lineNum != null ? `${row.filename}:${lineNum}` : null
       const lineComments = lineKey ? commentsByLine.get(lineKey) : null
       if (lineComments?.length) {
