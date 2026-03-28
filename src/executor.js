@@ -506,9 +506,9 @@ export async function listPRComments(repo, number) {
   `
   const result = await run([
     'api', 'graphql',
-    '-F', `owner=${owner}`,
-    '-F', `name=${name}`,
-    '-f', `number=${number}`,
+    '-f', `owner=${owner}`,
+    '-f', `name=${name}`,
+    '-F', `number=${number}`,
     '-f', `query=${query}`,
   ])
   const threads = result?.data?.repository?.pullRequest?.reviewThreads?.nodes || []
