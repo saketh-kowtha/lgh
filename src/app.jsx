@@ -33,6 +33,7 @@ import { SettingsPane } from './features/settings/index.jsx'
 import { LogPane } from './features/logs/index.jsx'
 import { NotificationList } from './features/notifications/index.jsx'
 import { CustomPane } from './components/CustomPane.jsx'
+import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 
 const _config = loadConfig()
 
@@ -368,28 +369,31 @@ export function App({ repo }) {
   const rows    = stdout?.rows    || 24
 
   // ─── Mouse support ────────────────────────────────────────────────────────
+  const [mouseEnabled, setMouseEnabled] = useState(
+    _config.mouse === true || process.env.LAZYHUB_MOUSE === '1'
+  )
+
   useEffect(() => {
-    if (process.env.LAZYHUB_MOUSE !== '1') return
+    if (!mouseEnabled) return
     // Enable mouse button + scroll tracking (X10 + SGR mode)
     process.stdout.write('\x1b[?1000h\x1b[?1002h\x1b[?1015h\x1b[?1006h')
-    // Parse mouse events from raw stdin
+    // Parse mouse events from raw stdin data — runs before readline/Ink sees the bytes
     const handleData = (buf) => {
       const str = buf.toString()
       // SGR mouse: ESC [ < Cb ; Cx ; Cy M/m
       const sgr = str.match(/\x1b\[<(\d+);(\d+);(\d+)([Mm])/)
-      if (sgr) {
-        const btn = parseInt(sgr[1])
-        // Scroll up = btn 64, scroll down = btn 65
-        if (btn === 64) { process.stdin.emit('keypress', null, { name: 'k' }) }
-        if (btn === 65) { process.stdin.emit('keypress', null, { name: 'j' }) }
-      }
+      if (!sgr) return
+      const btn = parseInt(sgr[1])
+      // Scroll up = btn 64, scroll down = btn 65
+      if (btn === 64) { process.stdin.emit('keypress', 'k', { name: 'k', sequence: 'k', ctrl: false, meta: false, shift: false }) }
+      if (btn === 65) { process.stdin.emit('keypress', 'j', { name: 'j', sequence: 'j', ctrl: false, meta: false, shift: false }) }
     }
-    process.stdin.on('data', handleData)
+    process.stdin.prependListener('data', handleData)
     return () => {
       process.stdout.write('\x1b[?1000l\x1b[?1002l\x1b[?1015l\x1b[?1006l')
       process.stdin.off('data', handleData)
     }
-  }, [])
+  }, [mouseEnabled])
 
   const [pane, setPane]             = useState(_config.defaultPane)
   const [view, setView]             = useState('list')
@@ -402,7 +406,7 @@ export function App({ repo }) {
   const notifyDialog = useCallback((active) => { dialogActiveRef.current = active }, [])
   const openHelp     = useCallback(() => setShowHelp(true), [])
 
-  const appCtx = { notifyDialog, openHelp }
+  const appCtx = { notifyDialog, openHelp, setMouseEnabled }
 
   // ─── Layout breakpoints ───────────────────────────────────────────────────
   const showSidebar     = columns >= 80
@@ -495,12 +499,14 @@ export function App({ repo }) {
   if (view === 'diff' && selectedItem) {
     return (
       <AppContext.Provider value={appCtx}>
-        <PRDiff
-          prNumber={selectedItem.number}
-          repo={repo}
-          onBack={goBack}
-          onViewComments={goToComments}
-        />
+        <ErrorBoundary>
+          <PRDiff
+            prNumber={selectedItem.number}
+            repo={repo}
+            onBack={goBack}
+            onViewComments={goToComments}
+          />
+        </ErrorBoundary>
       </AppContext.Provider>
     )
   }
@@ -508,12 +514,14 @@ export function App({ repo }) {
   if (view === 'comments' && selectedItem) {
     return (
       <AppContext.Provider value={appCtx}>
-        <PRComments
-          prNumber={selectedItem.number}
-          repo={repo}
-          onBack={goBack}
-          onJumpToDiff={() => setView('diff')}
-        />
+        <ErrorBoundary>
+          <PRComments
+            prNumber={selectedItem.number}
+            repo={repo}
+            onBack={goBack}
+            onJumpToDiff={() => setView('diff')}
+          />
+        </ErrorBoundary>
       </AppContext.Provider>
     )
   }
@@ -530,7 +538,9 @@ export function App({ repo }) {
                 height={rows - 2}
               />
             )}
-            <LogPane onBack={() => setView('list')} />
+            <ErrorBoundary>
+              <LogPane onBack={() => setView('list')} />
+            </ErrorBoundary>
           </Box>
           <StatusBar repo={repo} pane="logs" />
           <FooterKeys keys={[
@@ -557,7 +567,9 @@ export function App({ repo }) {
                 height={rows - 2}
               />
             )}
-            <SettingsPane onBack={() => setView('list')} />
+            <ErrorBoundary>
+              <SettingsPane onBack={() => setView('list')} />
+            </ErrorBoundary>
           </Box>
           <StatusBar repo={repo} pane="settings" />
           <FooterKeys keys={[
@@ -592,14 +604,16 @@ export function App({ repo }) {
       <AppContext.Provider value={appCtx}>
         <Box flexDirection="column">
           <Box borderStyle="single" borderColor={t.ui.selected} flexDirection="column" flexGrow={1}>
-            <DetailPane
-              {...(pane === 'issues'
-                ? { issueNumber: selectedItem.number }
-                : { prNumber: selectedItem.number })}
-              repo={repo}
-              onBack={goBack}
-              onOpenDiff={goToDiff}
-            />
+            <ErrorBoundary>
+              <DetailPane
+                {...(pane === 'issues'
+                  ? { issueNumber: selectedItem.number }
+                  : { prNumber: selectedItem.number })}
+                repo={repo}
+                onBack={goBack}
+                onOpenDiff={goToDiff}
+              />
+            </ErrorBoundary>
           </Box>
           <StatusBar repo={repo} pane={pane} count={paneState.count} />
           <FooterKeys keys={detailFooter} />
@@ -668,7 +682,9 @@ export function App({ repo }) {
           <Box flexDirection="column" flexGrow={1} overflow="hidden" borderStyle="single" borderColor={t.ui.selected}>
             <PaneHeader pane={pane} count={paneState.count} loading={paneState.loading} error={paneState.error} />
             <Box flexGrow={1} flexDirection="column" overflow="hidden">
-              {renderListPane()}
+              <ErrorBoundary>
+                {renderListPane()}
+              </ErrorBoundary>
             </Box>
           </Box>
 

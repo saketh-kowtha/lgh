@@ -16,7 +16,7 @@ import {
   replyToComment, editPRComment, deletePRComment,
 } from '../../executor.js'
 import { FooterKeys } from '../../components/FooterKeys.jsx'
-import { t } from '../../theme.js'
+import { useTheme } from '../../theme.js'
 import { TextInput, sanitize } from '../../utils.js'
 
 const FOOTER_KEYS = [

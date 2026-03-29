@@ -9,7 +9,22 @@ import chalk from 'chalk'
 import { useTheme } from '../../theme.js'
 import { TextInput } from '../../utils.js'
 
-// ... (highlightMatch and matchesQuery)
+function matchesQuery(item, query, searchFields) {
+  if (!query) return true
+  const q = query.toLowerCase()
+  return searchFields.some(field => String(item[field] ?? '').toLowerCase().includes(q))
+}
+
+function getDisplayText(item, searchFields) {
+  if (item.title != null) return `${item.number != null ? '#' + item.number + ' ' : ''}${item.title}`
+  if (item.name != null) return item.name
+  return String(item[searchFields[0]] ?? '')
+}
+
+function highlightMatch(display, query) {
+  if (!query) return display
+  return display
+}
 
 export function FuzzySearch({ items = [], onSubmit, onCancel, searchFields = ['title', 'name'] }) {
   const { t } = useTheme()

@@ -7,9 +7,10 @@ import { Box, Text, useInput } from 'ink'
 import { THEME_NAMES, BUILTIN_THEMES, useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
 import { loadConfig, saveConfig } from '../../config.js'
+import { logger } from '../../utils.js'
 
 export function SettingsPane({ onBack }) {
-  const { notifyDialog } = useContext(AppContext)
+  const { notifyDialog, setMouseEnabled } = useContext(AppContext)
   const { t, themeName, setTheme } = useTheme()
   const [config, setConfig] = useState(() => loadConfig())
   const [cursor, setCursor] = useState(0)
@@ -57,7 +58,9 @@ export function SettingsPane({ onBack }) {
   }
 
   if (dialog === 'mouse') {
-    updateConfig({ mouse: !config.mouse })
+    const next = !config.mouse
+    updateConfig({ mouse: next })
+    setMouseEnabled(next)
     setDialog(null)
   }
 

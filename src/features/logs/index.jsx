@@ -5,7 +5,7 @@
 import React, { useState, useMemo, useEffect, useContext } from 'react'
 import { Box, Text, useInput, useStdout } from 'ink'
 import { format } from 'timeago.js'
-import { getLogs, logger, TextInput } from '../../utils.js'
+import { getLogs, logger, TextInput, copyToClipboard } from '../../utils.js'
 import { useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
 
@@ -24,6 +24,13 @@ export function LogPane({ onBack }) {
   const [cursor, setCursor] = useState(0)
   const [scrollOffset, setScrollOffset] = useState(0)
   const [selectedLog, setSelectedLog] = useState(null)
+  const [copyStatus, setCopyStatus] = useState(null)
+
+  const doCopy = (log) => {
+    copyToClipboard(JSON.stringify(log, null, 2))
+      .then(() => { setCopyStatus('✓ Copied'); setTimeout(() => setCopyStatus(null), 2000) })
+      .catch(() => { setCopyStatus('✗ Copy failed'); setTimeout(() => setCopyStatus(null), 2000) })
+  }
 
   const refreshLogs = () => {
     setAllLogs(getLogs())
@@ -60,6 +67,7 @@ export function LogPane({ onBack }) {
 
   useInput((input, key) => {
     if (selectedLog) {
+      if (input === 'y') { doCopy(selectedLog); return }
       if (key.escape || input === 'q') { setSelectedLog(null); return }
       return
     }
@@ -94,6 +102,10 @@ export function LogPane({ onBack }) {
         return next
       })
     }
+    if (input === 'y' && filteredLogs[cursor]) {
+      doCopy(filteredLogs[cursor])
+      return
+    }
     if (key.return && filteredLogs[cursor]) {
       setSelectedLog(filteredLogs[cursor])
     }
@@ -102,7 +114,10 @@ export function LogPane({ onBack }) {
   if (selectedLog) {
     return (
       <Box flexDirection="column" borderStyle="round" borderColor={t.ui.selected} paddingX={1}>
-        <Text color={t.ui.selected} bold>Log Details</Text>
+        <Box justifyContent="space-between">
+          <Text color={t.ui.selected} bold>Log Details</Text>
+          {copyStatus && <Text color={copyStatus.startsWith('✓') ? t.ci.pass : t.ci.fail}>{copyStatus}</Text>}
+        </Box>
         <Box flexDirection="column" marginTop={1}>
           <Text color={t.ui.dim}>Time:  <Text color={t.ui.muted}>{selectedLog.timestamp}</Text></Text>
           <Text color={t.ui.dim}>Level: <Text color={levelColor(selectedLog.level, t)}>{selectedLog.level}</Text></Text>
@@ -115,7 +130,7 @@ export function LogPane({ onBack }) {
           })}
         </Box>
         <Box marginTop={1}>
-          <Text color={t.ui.dim}>[Esc/q] close</Text>
+          <Text color={t.ui.dim}>[y] copy  [Esc/q] close</Text>
         </Box>
       </Box>
     )
@@ -160,8 +175,9 @@ export function LogPane({ onBack }) {
         )}
       </Box>
 
-      <Box borderStyle="single" borderTop={true} borderBottom={false} borderLeft={false} borderRight={false} borderColor={t.ui.border}>
-        <Text color={t.ui.dim}>[j/k] nav  [Enter] detail  [f] cycle level  [/] search  [r] refresh  [Esc] back</Text>
+      <Box borderStyle="single" borderTop={true} borderBottom={false} borderLeft={false} borderRight={false} borderColor={t.ui.border} justifyContent="space-between">
+        <Text color={t.ui.dim}>[j/k] nav  [Enter] detail  [y] copy  [f] level  [/] search  [r] refresh  [Esc] back</Text>
+        {copyStatus && <Text color={copyStatus.startsWith('✓') ? t.ci.pass : t.ci.fail}> {copyStatus}</Text>}
       </Box>
     </Box>
   )

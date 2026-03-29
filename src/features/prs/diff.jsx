@@ -19,12 +19,46 @@ import { FooterKeys } from '../../components/FooterKeys.jsx'
 import { loadConfig } from '../../config.js'
 import { useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
-import { TextInput, colorChalk, bgColorChalk, applyThemeStyle } from '../../utils.js'
+import { TextInput, colorChalk, bgColorChalk, applyThemeStyle, sanitize } from '../../utils.js'
 
 const _diffCfg = loadConfig().diff
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
 
-// ... (openEditorSync and other helpers)
+function getLang(filename) {
+  if (!filename) return null
+  const ext = (filename.split('.').pop() || '').toLowerCase()
+  const map = {
+    js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
+    ts: 'typescript', tsx: 'typescript',
+    py: 'python', rb: 'ruby', go: 'go', rs: 'rust',
+    java: 'java', kt: 'kotlin', swift: 'swift',
+    cpp: 'cpp', cc: 'cpp', cxx: 'cpp', c: 'c', h: 'c',
+    cs: 'csharp', php: 'php',
+    sh: 'bash', bash: 'bash', zsh: 'bash',
+    json: 'json', yaml: 'yaml', yml: 'yaml',
+    xml: 'xml', html: 'html', htm: 'html',
+    css: 'css', scss: 'scss', less: 'less',
+    md: 'markdown', sql: 'sql',
+    graphql: 'graphql', gql: 'graphql',
+  }
+  return map[ext] || null
+}
+
+function openEditorSync(initial) {
+  const raw = process.env.EDITOR || process.env.VISUAL || 'vi'
+  if (!raw || /[\0\n\r]/.test(raw)) return initial
+  const [editorBin, ...editorArgs] = raw.split(/\s+/).filter(Boolean)
+  let tmpDir
+  try {
+    tmpDir = mkdtempSync(join(tmpdir(), 'lazyhub-'))
+    const tmp = join(tmpDir, 'comment.md')
+    writeFileSync(tmp, initial || '', { mode: 0o600 })
+    const result = spawnSync(editorBin, [...editorArgs, tmp], { stdio: 'inherit' })
+    if (result.status !== 0) return initial
+    return readFileSync(tmp, 'utf8')
+  } catch { return initial }
+  finally { try { if (tmpDir) rmSync(tmpDir, { recursive: true, force: true }) } catch {} }
+}
 
 // ─── hljs HTML → chalk ───────────────────────────────────────────────────────
 // Converts highlight.js HTML output to chalk-colored terminal strings.
@@ -1002,9 +1036,10 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
       {fileJumpActive && (
         <Box flexDirection="column" borderStyle="round" borderColor={t.ui.selected} paddingX={1} marginX={1}>
           <FuzzySearch
-            items={files.map(f => f.filename)}
-            onSubmit={(filename) => {
-              const fileIdx = fileStartIndices[files.findIndex(f => f.filename === filename)]
+            items={files.map(f => ({ name: f.filename }))}
+            searchFields={['name']}
+            onSubmit={(item) => {
+              const fileIdx = fileStartIndices[files.findIndex(f => f.filename === item.name)]
               if (fileIdx != null) jumpTo(fileIdx)
               setFileJumpActive(false)
             }}

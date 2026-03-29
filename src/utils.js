@@ -88,6 +88,21 @@ export function sanitize(str) {
 }
 
 /**
+ * Copy text to the system clipboard. Returns a Promise<void>.
+ */
+export function copyToClipboard(text) {
+  return import('execa').then(({ execa }) => {
+    const [cmd, args] =
+      process.platform === 'darwin' ? ['pbcopy', []] :
+      process.platform === 'win32'  ? ['clip',   []] :
+                                      ['xclip',  ['-selection', 'clipboard']]
+    const proc = execa(cmd, args)
+    proc.stdin?.end(text)
+    return proc
+  })
+}
+
+/**
  * Safely applies a color (hex or keyword) to a chalk instance.
  */
 export function colorChalk(color) {

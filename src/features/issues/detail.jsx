@@ -211,6 +211,7 @@ export function IssueDetail({ issueNumber, repo, onBack }) {
 // ─── Sub-dialogs ──────────────────────────────────────────────────────────────
 
 function IssueLabelDialog({ repo, issue, onClose }) {
+  const { t } = useTheme()
   const { data: allLabels, loading } = useGh(listLabels, [repo])
   if (loading) return <Box paddingX={1}><Text color={t.ui.muted}>Loading labels...</Text></Box>
   const items = (allLabels || []).map(l => ({
