@@ -2,7 +2,8 @@
  * theme.js — resolves the active theme from config and exports t.
  */
 
-import _React, { createContext, useContext, useState, useMemo, useCallback } from 'react'
+/* eslint-disable-next-line no-unused-vars */
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react'
 import { readFileSync, existsSync } from 'fs'
 import { join, isAbsolute } from 'path'
 import { homedir } from 'os'

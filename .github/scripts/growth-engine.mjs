@@ -11,25 +11,25 @@ import { join } from 'path'
 
 const { GEMINI_API_KEY, REPO } = process.env
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" })
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
 // 1. Collect codebase context (Gemini's 2M context window handles this!)
 function getFiles(dir, allFiles = []) {
-  const files = readdirSync(dir)
-  for (const file of files) {
-    if (file === 'node_modules' || file === '.git' || file === 'dist') continue
-    const name = join(dir, file)
-    if (statSync(name).isDirectory()) getFiles(name, allFiles)
-    else if (name.endsWith('.js') || name.endsWith('.jsx') || name.endsWith('.md')) allFiles.push(name)
-  }
-  return allFiles
+    const files = readdirSync(dir)
+    for (const file of files) {
+        if (file === 'node_modules' || file === '.git' || file === 'dist') continue
+        const name = join(dir, file)
+        if (statSync(name).isDirectory()) getFiles(name, allFiles)
+        else if (name.endsWith('.js') || name.endsWith('.jsx') || name.endsWith('.md')) allFiles.push(name)
+    }
+    return allFiles
 }
 
 const allFilePaths = getFiles('.')
 let codebaseContext = ''
 for (const path of allFilePaths) {
-  const content = readFileSync(path, 'utf8')
-  codebaseContext += `\n--- FILE: ${path} ---\n${content}\n`
+    const content = readFileSync(path, 'utf8')
+    codebaseContext += `\n--- FILE: ${path} ---\n${content}\n`
 }
 
 // 2. The "Stunning Marketing" Prompt
@@ -58,21 +58,21 @@ FILE: docs/index.html
 `
 
 async function run() {
-  const result = await model.generateContent(PROMPT)
-  const response = await result.response
-  const text = response.text()
+    const result = await model.generateContent(PROMPT)
+    const response = await result.response
+    const text = response.text()
 
-  const readme = text.split('FILE: README.md')[1]?.split('FILE: docs/index.html')[0]?.trim()
-  const index = text.split('FILE: docs/index.html')[1]?.trim()
+    const readme = text.split('FILE: README.md')[1]?.split('FILE: docs/index.html')[0]?.trim()
+    const index = text.split('FILE: docs/index.html')[1]?.trim()
 
-  if (readme) {
-    writeFileSync('README.md', readme)
-    console.log('✓ Stunning README.md generated.')
-  }
-  if (index) {
-    writeFileSync('docs/index.html', index)
-    console.log('✓ Stunning docs/index.html generated.')
-  }
+    if (readme) {
+        writeFileSync('README.md', readme)
+        console.log('✓ Stunning README.md generated.')
+    }
+    if (index) {
+        writeFileSync('docs/index.html', index)
+        console.log('✓ Stunning docs/index.html generated.')
+    }
 }
 
 run().catch(console.error)
