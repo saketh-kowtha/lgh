@@ -101,7 +101,7 @@ lazyhub
 ## Features
 
 - **Rich Markdown Rendering:** PR and Issue descriptions feature bold headers, lists, and syntax-highlighted code blocks.
-- **In-App Settings:** Press `S` to change themes, toggle mouse support, and more in real-time.
+- **In-App Settings:** Press `S` to change themes and more in real-time.
 - **Advanced Diff Navigation:** Press `f` in the diff view to fuzzy-jump to any changed file.
 - **Custom Pane Scripting:** Use JS `preProcessor` scripts to transform custom command output before rendering.
 - **Bulletproof Input:** Unified text input with cursor support and readline shortcuts (`Ctrl+A`, `Ctrl+E`, `Ctrl+U`, `Ctrl+K`).
@@ -372,7 +372,6 @@ See the [project board](https://github.com/users/saketh-kowtha/projects) and [op
 Highlights coming up:
 - Homebrew tap
 - GitHub Enterprise (`GH_HOST`) support
-- Mouse support (opt-in)
 - Releases pane
 - Gists pane
 
