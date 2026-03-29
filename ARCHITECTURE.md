@@ -484,17 +484,135 @@ Full schema:
 
 ---
 
-## 19. CI/CD — `.github/workflows/release.yml`
+## 19. CI/CD — Full Pipeline
 
-Triggered on: merged PR to `main`.
+### Branch model
 
-### Steps
-1. `prepare-release.mjs` — uses Claude API to decide version bump, writes `package.json` + `CHANGELOG.md` + release notes to `/tmp/release-notes.md`, outputs `version` step output.
-2. Commit version bump + changelog (`[skip ci]`).
-3. `gh release create`.
-4. `npm publish --access public` (skips gracefully if `NPM_TOKEN` not set).
-5. **Compute tarball SHA256** — polls npm CDN for HTTP 200 (18 × 10s = up to 3 minutes) before fetching. Uses `--retry-all-errors` so CDN 404s during propagation trigger retries. Guards against empty SHA before writing to `GITHUB_OUTPUT`.
-6. **Push Homebrew formula** — getContent to read current file SHA (needed for update). Catches only HTTP 404 (file absent = first release). Rethrows 403/500/etc.
+```
+feature/* ──► main  (production — tags and releases always cut from here)
+                │
+                │  Actions → Release (workflow_dispatch: patch/minor/major)
+                │  Bot opens PR: release/vX.Y.Z → main
+                ▼
+              main  ◄── merge triggers tag.yml → GitHub Release tag
+                                               → publish.yml → npm + Homebrew
+```
+
+- **`main`** is the only long-lived branch. All feature work and releases land here.
+- **`release/vX.Y.Z`** are short-lived bot-created branches, one per release, deleted after merge.
+- The old `release` staging branch is no longer used.
+
+---
+
+### Workflow inventory
+
+| File | Trigger | Purpose |
+|---|---|---|
+| `ci.yml` | push / PR → `main` | Tests (Node 20 + 22), lint, Knip dead-code, build, npm audit |
+| `release.yml` | `workflow_dispatch` (pick: patch/minor/major) | Runs AI docs + version bump, opens `release/vX.Y.Z` PR into `main` |
+| `tag.yml` | PR merged: `release/*` → `main` | Creates GitHub Release tag |
+| `publish.yml` | push tag `v*` | `npm publish`, computes SHA256, updates Homebrew formula |
+| `pages.yml` | push to `main` (docs/** changes) | Deploys `docs/` to GitHub Pages |
+| `growth-engine.yml` | push to `main` (src/README/docs changes) | AI rewrites README/docs, opens `chore/growth-engine-docs` PR |
+| `claude-review.yml` | PR → `main` (label: `ai-review`) | Claude posts code review comment on PR |
+| `claude-security.yml` | PR → `main` (label: `ai-security`) | Claude posts security audit; exits 1 on critical findings |
+
+---
+
+### Full release flow (step by step)
+
+```
+1. Dev opens PR: feature/* → main
+   └─ ci.yml runs (tests + lint + build + audit)
+   └─ claude-review.yml runs if 'ai-review' label present
+   └─ 1 approval → merge
+
+2. When ready to ship:
+   Actions → Release → Run workflow → choose bump type (patch/minor/major)
+   └─ release.yml runs:
+       a. Fetches last merged PR for context
+       b. auto-docs.mjs   → updates ARCHITECTURE.md (Gemini)
+       c. prepare-release.mjs → bumps package.json, writes CHANGELOG.md (Claude)
+       d. Creates branch release/vX.Y.Z
+       e. Opens PR: release/vX.Y.Z → main
+
+3. Review the PR (CHANGELOG, version, ARCHITECTURE.md) → merge
+   └─ tag.yml triggers:
+       a. reads version from package.json
+       b. gh release create vX.Y.Z --latest
+   └─ publish.yml triggers (on new tag):
+       a. npm publish --access public
+       b. polls npm CDN until tarball available (18 × 10s)
+       c. computes SHA256
+       d. pushes Formula/lazyhub.rb to saketh-kowtha/homebrew-tap
+```
+
+**Per-release cost: 1 manual PR.** Everything else is automated.
+
+---
+
+### Branch protection (enforced via API + Ruleset)
+
+| Setting | `main` |
+|---|---|
+| Required checks | Test (Node 20/22), Dependency audit |
+| strict (up-to-date) | `false` |
+| Required reviews | 1 approval, dismiss stale, last-push approval |
+| Linear history | yes |
+| Force push | blocked (Ruleset: `non_fast_forward`) |
+| Deletions | blocked (Ruleset) |
+| enforce_admins | yes |
+| Conversation resolution | required |
+
+> **Ruleset note:** Classic branch protection API does not reliably enforce `allow_force_pushes: false` on this repo. The GitHub Ruleset "Protect main and release — no force push" (id: 14475751) enforces `non_fast_forward` and `deletion` rules on `main` with no bypass actors.
+
+---
+
+### Required secrets
+
+| Secret | Used by | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | `release.yml`, `claude-review.yml`, `claude-security.yml` | Claude API calls |
+| `GEMINI_API_KEY` | `release.yml`, `growth-engine.yml` | Gemini API calls |
+| `NPM_TOKEN` | `publish.yml` | `npm publish` |
+| `TAP_TOKEN` | `publish.yml` | Write access to `saketh-kowtha/homebrew-tap` |
+| `GITHUB_TOKEN` | all workflows | Auto-provided by Actions |
+
+---
+
+### auto-docs.yml — prep flow detail
+
+Triggered when a PR from `main` is merged into `release`.
+
+Steps:
+1. Enforce source branch is `main` (fails otherwise).
+2. `auto-docs.mjs` — reads PR diff + metadata, calls Gemini to update `ARCHITECTURE.md`.
+3. `prepare-release.mjs` — calls Claude API to decide semver bump based on PR labels/title, writes `package.json`, `CHANGELOG.md`, `README.md`, `docs/`.
+4. Creates branch `prep/vX.Y.Z`, commits changed files, opens PR into `release`.
+
+---
+
+### publish.yml — SHA256 step (critical)
+
+```bash
+SHA=$(curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors "$URL" | sha256sum | awk '{print $1}')
+[ -z "$SHA" ] && echo "ERROR: SHA256 is empty" && exit 1
+```
+- Polls npm CDN for HTTP 200 (18 × 10s = up to 3 min) before fetching — CDN propagation lag.
+- `--retry-all-errors` is **required**: without it `--retry` only fires on network errors, not HTTP 4xx/5xx. A CDN 404 under `-f` pipes empty bytes to `sha256sum`, producing `e3b0c44…` (SHA256 of empty string) — a silent wrong checksum committed to the tap.
+- Empty SHA guard prevents bad Homebrew formula.
+
+### publish.yml — getContent error handling
+
+```js
+try {
+  const { data } = await github.rest.repos.getContent({ owner, repo, path })
+  sha = data.sha
+} catch (err) {
+  if (err.status !== 404) throw err  // only ignore "file not found" (first release)
+}
+```
+403 (bad TAP_TOKEN) and 500 errors must propagate, not be swallowed.
 
 ### SHA256 step — critical curl flags
 ```bash

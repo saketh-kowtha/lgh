@@ -1,46 +1,87 @@
-name: Release (Tag & Release)
+name: Release
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options: [patch, minor, major]
 
 jobs:
-  tag:
-    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'release'
+  prepare:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
 
-      - name: Get version from package.json
-        id: pkg
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.pkg.outputs.version }}
-        run: |
-          # The prepare-release.mjs already updated CHANGELOG.md,
-          # so we can just grab the latest entry for the release notes.
-          gh release create "v${VERSION}" \
-            --title "v${VERSION}" \
-            --notes "Full release notes available in CHANGELOG.md" \
-            --latest
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Sync Main back to Release
+      - name: Resolve last merged PR (for docs context)
+        id: last_pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          JSON=$(gh pr list --base main --state merged --limit 1 --json number,title,body)
+          echo "number=$(echo "$JSON" | jq -r '.[0].number // ""')" >> "$GITHUB_OUTPUT"
+          echo "title=$(echo "$JSON"  | jq -r '.[0].title  // ""')" >> "$GITHUB_OUTPUT"
+          echo "$JSON" | jq -r '.[0].body // ""' > /tmp/pr_body.txt
+
+      - name: Update Architecture (AI)
+        if: steps.last_pr.outputs.number != ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.last_pr.outputs.number }}
+          PR_TITLE:  ${{ steps.last_pr.outputs.title }}
+          REPO: ${{ github.repository }}
+        run: |
+          export PR_BODY=$(cat /tmp/pr_body.txt)
+          node .github/scripts/auto-docs.mjs
+
+      - name: Prepare Version & Changelog
+        id: prepare
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUMP_TYPE: ${{ inputs.bump_type }}
+          PR_NUMBER: ${{ steps.last_pr.outputs.number }}
+          PR_TITLE:  ${{ steps.last_pr.outputs.title }}
+          PR_LABELS: '[]'
+          REPO: ${{ github.repository }}
+        run: |
+          export PR_BODY=$(cat /tmp/pr_body.txt)
+          node .github/scripts/prepare-release.mjs
+
+      - name: Open release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.prepare.outputs.version }}
+          BUMP: ${{ inputs.bump_type }}
+        run: |
+          BRANCH="release/v${VERSION}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin release
-          git checkout release
-          git merge main --no-edit
-          git push origin release
+          git checkout -b "$BRANCH"
+          git add ARCHITECTURE.md package.json CHANGELOG.md README.md docs/
+          git diff --cached --quiet && echo "Nothing to commit" || \
+            git commit -m "chore: release v${VERSION}"
+          git push origin "$BRANCH"
+          BODY=$(printf "## Release v%s (%s bump)\n\nReview CHANGELOG.md for what's included. Merge this PR to create the GitHub Release, publish to npm, and update Homebrew." "$VERSION" "$BUMP")
+          gh pr create \
+            --title "chore: release v${VERSION}" \
+            --body "$BODY" \
+            --base main \
+            --head "$BRANCH"
