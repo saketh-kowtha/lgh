@@ -13,75 +13,132 @@
             --text-muted: #8b949e;
             --primary: #58a6ff;
             --success: #3fb950;
-            --accent: #a371f7;
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --accent: #bc8cff;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            --mono: 'JetBrains Mono', 'Fira Code', monospace;
         }
 
         * { box-sizing: border-box; }
-
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
+            font-family: var(--font);
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        header {
-            padding: 4rem 0 2rem 0;
-            text-align: center;
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 10%;
+            border-bottom: 1px solid var(--border);
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 2rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--primary); }
+
+        .hero {
+            padding: 8rem 10% 4rem;
+            text-align: center;
+            background: radial-gradient(circle at 50% -20%, #1f2937 0%, #0d1117 100%);
+        }
+
+        .hero h1 {
             font-size: 4rem;
+            font-weight: 900;
             margin-bottom: 1rem;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to right, #fff, #8b949e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        h1 {
-            font-size: 3rem;
-            margin: 0;
-            letter-spacing: -1px;
-            color: #fff;
-        }
-
-        .tagline {
+        .hero p {
             font-size: 1.25rem;
             color: var(--text-muted);
-            margin-top: 1rem;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
         }
 
-        .hero-cta {
-            margin: 3rem 0;
+        .cta-group {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 4rem;
         }
 
-        .install-box {
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { border: 1px solid var(--border); color: var(--text); }
+        .btn-secondary:hover { background: var(--surface); }
+
+        .terminal-box {
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-family: var(--font-mono);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: left;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
         }
 
-        .install-box span { color: var(--success); }
+        .terminal-header {
+            background: #21262d;
+            padding: 0.75rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+
+        .terminal-body {
+            padding: 1.5rem;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            color: var(--success);
+        }
 
         .features {
+            padding: 6rem 10%;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            margin: 4rem 0;
         }
 
         .feature-card {
@@ -89,138 +146,139 @@
             border: 1px solid var(--border);
             padding: 2rem;
             border-radius: 12px;
-            transition: transform 0.2s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
         }
 
         .feature-card h3 {
             margin-top: 0;
-            color: var(--primary);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            color: var(--primary);
         }
 
         .keybindings {
+            padding: 6rem 10%;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 4rem 0;
         }
 
-        .kb-grid {
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title h2 { font-size: 2.5rem; font-weight: 800; }
+
+        .kbd-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
-        .kb-item {
+        .kbd-item {
             display: flex;
             justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
 
-        .kb-key {
-            font-family: var(--font-mono);
-            background: var(--bg);
-            padding: 0.2rem 0.5rem;
+        kbd {
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-family: var(--mono);
             color: var(--accent);
         }
 
         footer {
+            padding: 4rem 10%;
             text-align: center;
-            padding: 4rem 0;
-            color: var(--text-muted);
             border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
-        .badge-group {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-
-        code {
-            font-family: var(--font-mono);
-            color: var(--accent);
-        }
-
-        @media (max-width: 600px) {
-            .kb-grid { grid-template-columns: 1fr; }
-            h1 { font-size: 2rem; }
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .nav-links { display: none; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div class="logo">🦥</div>
-        <h1>lazyhub</h1>
-        <p class="tagline">The terminal UI for GitHub you've been waiting for.</p>
-        
-        <div class="badge-group">
-            <img src="https://img.shields.io/npm/v/lazyhub?color=3fb950&label=npm" alt="npm">
-            <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="node">
-            <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="license">
-        </div>
-    </header>
+<nav>
+    <a href="#" class="logo">🦥 lazyhub</a>
+    <div class="nav-links">
+        <a href="https://github.com/saketh-kowtha/lazyhub">GitHub</a>
+        <a href="https://www.npmjs.com/package/lazyhub">npm</a>
+        <a href="#keybindings">Keybindings</a>
+    </div>
+</nav>
 
-    <div class="hero-cta">
-        <div class="install-box">
-            <span>$</span> brew install saketh-kowtha/tap/lazyhub
-        </div>
-        <p style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted)">
-            Also available via <code>npm install -g lazyhub</code>
-        </p>
+<section class="hero">
+    <h1>Stop Context Switching.</h1>
+    <p>The keyboard-driven terminal UI for GitHub that keeps you in your flow. Built on the <code>gh</code> CLI.</p>
+    
+    <div class="cta-group">
+        <a href="https://github.com/saketh-kowtha/lazyhub" class="btn btn-primary">Get Started</a>
+        <a href="#keybindings" class="btn btn-secondary">Keybindings</a>
     </div>
 
-    <section class="features">
-        <div class="feature-card">
-            <h3>🤖 AI Code Review</h3>
-            <p>Press <code>A</code> in any diff to have Claude 3.5 analyze your changes for bugs, performance leaks, and style improvements.</p>
+    <div class="terminal-box">
+        <div class="terminal-header">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
         </div>
-        <div class="feature-card">
-            <h3>⚡ Vim-Style Navigation</h3>
-            <p>Home-row focused navigation with <code>j/k</code> and lightning-fast pane switching. Context-switching is now a thing of the past.</p>
+        <div class="terminal-body">
+            <div>$ brew install saketh-kowtha/tap/lazyhub</div>
+            <div style="color: var(--text-muted); margin-top: 0.5rem;"># or</div>
+            <div>$ npm install -g lazyhub</div>
+            <div style="color: var(--text-muted); margin-top: 0.5rem;"># then run:</div>
+            <div style="color: #fff;">$ lazyhub</div>
         </div>
-        <div class="feature-card">
-            <h3>🔍 Fuzzy Search</h3>
-            <p>Instantly filter pull requests, issues, or branch lists. Jump to specific files in massive PRs with the <code>f</code> key.</p>
-        </div>
-        <div class="feature-card">
-            <h3>🎨 Elite Theming</h3>
-            <p>Beautifully crafted themes like Tokyo Night and Catppuccin built-in. Easily override colors via a simple JSON config.</p>
-        </div>
-    </section>
+    </div>
+</section>
 
-    <section class="keybindings">
-        <h2 style="margin-top: 0; color: #fff;">⌨️ Essential Keybindings</h2>
-        <div class="kb-grid">
-            <div class="kb-item"><span>Cycle Panes</span> <span class="kb-key">Tab</span></div>
-            <div class="kb-item"><span>Navigate List</span> <span class="kb-key">j / k</span></div>
-            <div class="kb-item"><span>Open Detail</span> <span class="kb-key">Enter</span></div>
-            <div class="kb-item"><span>Open Diff</span> <span class="kb-key">d</span></div>
-            <div class="kb-item"><span>Fuzzy Search</span> <span class="kb-key">/</span></div>
-            <div class="kb-item"><span>AI Review</span> <span class="kb-key">A</span></div>
-            <div class="kb-item"><span>Merge PR</span> <span class="kb-key">m</span></div>
-            <div class="kb-item"><span>Approve PR</span> <span class="kb-key">a</span></div>
-        </div>
-    </section>
+<section class="features">
+    <div class="feature-card">
+        <h3>🤖 AI Code Review</h3>
+        <p>Analyze diffs instantly with Claude 3.5 Sonnet. Identify bugs and architectual smells without leaving the terminal.</p>
+    </div>
+    <div class="feature-card">
+        <h3>⚡ High Performance</h3>
+        <p>Built with React and Ink for a reactive, zero-latency experience. 30s TTL caching ensures the UI stays snappy.</p>
+    </div>
+    <div class="feature-card">
+        <h3>🎨 Fully Themeable</h3>
+        <p>Switch between Tokyo Night, Catppuccin, or create your own JSON theme to match your terminal setup perfectly.</p>
+    </div>
+</section>
 
-    <footer>
-        <p>Built with ❤️ using Ink and React by <a href="https://github.com/saketh-kowtha" style="color: var(--primary);">Saketh Kowtha</a></p>
-        <p style="font-size: 0.8rem;">Inspired by lazygit. Not an official GitHub product.</p>
-    </footer>
-</div>
+<section id="keybindings" class="keybindings">
+    <div class="section-title">
+        <h2>Master the Home Row</h2>
+        <p>Vim-inspired shortcuts for everything.</p>
+    </div>
+    <div class="kbd-grid">
+        <div class="kbd-item"><span>Navigate</span><kbd>j/k</kbd></div>
+        <div class="kbd-item"><span>Switch Pane</span><kbd>Tab</kbd></div>
+        <div class="kbd-item"><span>Diff View</span><kbd>d</kbd></div>
+        <div class="kbd-item"><span>AI Review</span><kbd>A</kbd></div>
+        <div class="kbd-item"><span>Merge PR</span><kbd>m</kbd></div>
+        <div class="kbd-item"><span>Fuzzy Search</span><kbd>/</kbd></div>
+        <div class="kbd-item"><span>Refresh</span><kbd>r</kbd></div>
+        <div class="kbd-item"><span>Settings</span><kbd>S</kbd></div>
+    </div>
+</section>
+
+<footer>
+    <p>Released under the MIT License. Built with ❤️ by Saketh Kowtha.</p>
+</footer>
 
 </body>
 </html>

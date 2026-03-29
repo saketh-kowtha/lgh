@@ -98,7 +98,7 @@ npm install -g lazyhub
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Whether it's a bug fix, a new theme, or a feature request, check out our [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the project's internal invariants.
+We welcome contributions! Check out our [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the project's internal invariants and technical stack.
 
 ```bash
 # Setup for development
