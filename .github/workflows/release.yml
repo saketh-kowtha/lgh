@@ -52,7 +52,7 @@ jobs:
           git checkout -b "$BRANCH"
           git add package.json CHANGELOG.md README.md docs/
           git diff --cached --quiet && echo "Nothing to commit" || \
-            git commit -m "chore: release v${VERSION} [skip ci]"
+            git commit -m "chore: release v${VERSION}"
           git push origin "$BRANCH" --force
           BODY=$(printf "## Release v%s (%s bump)\n\nReview CHANGELOG.md for what's included. Merge this PR to create the GitHub Release, publish to npm, and update Homebrew." "$VERSION" "$BUMP")
           gh pr create \
