@@ -78,10 +78,8 @@ import { join, dirname } from 'path'
 import { homedir } from 'os'
 
 export const BUILTIN_PANES = ['prs', 'issues', 'branches', 'actions', 'notifications']
-/** @deprecated use BUILTIN_PANES */
-export const ALL_PANES = BUILTIN_PANES
 
-export const CONFIG_PATH = join(homedir(), '.config', 'lazyhub', 'config.json')
+const CONFIG_PATH = join(homedir(), '.config', 'lazyhub', 'config.json')
 
 // ─── Section defaults ─────────────────────────────────────────────────────────
 

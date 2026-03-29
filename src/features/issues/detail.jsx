@@ -13,7 +13,7 @@ import { useTheme } from '../../theme.js'
 import { sanitize, getMarkdownRows, TextInput } from '../../utils.js'
 
 // Exported so app.jsx can use them if needed
-export const FOOTER_KEYS = [
+const FOOTER_KEYS = [
   { key: 'r', label: 'reply' },
   { key: 'l', label: 'labels' },
   { key: 'A', label: 'assignees' },

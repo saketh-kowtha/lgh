@@ -926,7 +926,7 @@ export async function getGist(id) {
  * @param files
  * @param isPublic
  */
-export async function createGist(description, files, isPublic = false) {
+async function createGist(description, files, isPublic = false) {
   const payload = { description, public: isPublic, files: {} }
   Object.entries(files).forEach(([name, content]) => { payload.files[name] = { content } })
 

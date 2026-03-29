@@ -361,7 +361,7 @@ function PaneHeader({ pane, count, loading, error }) {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
-export function App({ repo }) {
+function App({ repo }) {
   const { t } = useTheme()
   const { exit } = useApp()
   const { stdout } = useStdout()

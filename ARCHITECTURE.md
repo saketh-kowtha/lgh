@@ -692,7 +692,7 @@ These are explicitly out of scope. Do not implement, do not document as features
 
 ---
 
-## 23. Quality Control (Deterministic)
+## 24. Quality Control (Deterministic)
 
 To maintain 100% accuracy with zero token cost, use these tools instead of AI for structural checks:
 

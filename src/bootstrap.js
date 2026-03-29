@@ -28,7 +28,7 @@ export async function detectGh() {
 /**
  *
  */
-export async function getArch() {
+async function getArch() {
   try {
     const { stdout } = await execa('uname', ['-m'])
     return stdout.trim()
@@ -94,7 +94,7 @@ export function hasBrowser() {
  *
  * @param rl
  */
-export async function readPATFromStdin(rl) {
+async function readPATFromStdin(rl) {
   return new Promise((resolve) => {
     if (!rl) {
       rl = readline.createInterface({
@@ -130,7 +130,7 @@ export async function getLoggedInUser() {
 /**
  *
  */
-export async function runLoginFlow() {
+async function runLoginFlow() {
   process.stdout.write('  lazyhub needs GitHub access. Starting login...\n')
 
   if (process.env.GITHUB_TOKEN) {
@@ -210,7 +210,7 @@ export async function listRepos() {
  *
  * @param repos
  */
-export async function pickRepoInteractive(repos) {
+async function pickRepoInteractive(repos) {
   return new Promise((resolve) => {
     if (repos.length === 0) {
       console.error('  No repositories found.')

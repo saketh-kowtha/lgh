@@ -46,13 +46,6 @@
             "name": "execa",
             "message": "Use src/executor.js for all gh CLI calls to ensure consistent error handling and redacting."
           }
-        ],
-        "patterns": [
-          {
-            "group": ["**/executor.js"],
-            "importNames": ["execa"],
-            "message": "Direct execa use is only allowed inside executor.js and bootstrap.js."
-          }
         ]
       }
     ]

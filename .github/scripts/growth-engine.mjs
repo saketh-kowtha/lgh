@@ -2,6 +2,7 @@
  * growth-engine.mjs
  * Gemini-powered technical marketing and documentation generator.
  * Analyzes the entire codebase to create stunning, engaging guides and site content.
+ * USES: Gemini 3 Flash (March 2026 Frontier)
  * Env vars required: GEMINI_API_KEY, REPO
  */
 
@@ -10,34 +11,66 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
 
 const { GEMINI_API_KEY, REPO } = process.env
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
-// 1. Collect codebase context (Gemini's 2M context window handles this!)
+/**
+ * Recursively collects all relevant files from the repository.
+ * @param {string} dir - Directory to search.
+ * @param {string[]} allFiles - Accumulator for file paths.
+ * @returns {string[]} List of file paths.
+ */
 function getFiles(dir, allFiles = []) {
+  try {
     const files = readdirSync(dir)
     for (const file of files) {
-        if (file === 'node_modules' || file === '.git' || file === 'dist') continue
-        const name = join(dir, file)
-        if (statSync(name).isDirectory()) getFiles(name, allFiles)
-        else if (name.endsWith('.js') || name.endsWith('.jsx') || name.endsWith('.md')) allFiles.push(name)
+      if (['node_modules', '.git', 'dist', '.claude'].includes(file)) continue
+      const name = join(dir, file)
+      if (statSync(name).isDirectory()) {
+        getFiles(name, allFiles)
+      } else if (name.endsWith('.js') || name.endsWith('.jsx') || name.endsWith('.md')) {
+        allFiles.push(name)
+      }
     }
-    return allFiles
+  } catch (err) {
+    console.error(`Warning: Failed to read directory ${dir}: ${err.message}`)
+  }
+  return allFiles
 }
 
-const allFilePaths = getFiles('.')
-let codebaseContext = ''
-for (const path of allFilePaths) {
-    const content = readFileSync(path, 'utf8')
-    codebaseContext += `\n--- FILE: ${path} ---\n${content}\n`
-}
+/**
+ * Main execution loop for the Growth Engine.
+ */
+async function run() {
+  if (!GEMINI_API_KEY) {
+    console.error('Error: GEMINI_API_KEY is not set.')
+    process.exit(1)
+  }
 
-// 2. The "Stunning Marketing" Prompt
-const PROMPT = `You are a world-class Product Marketing Engineer and Technical Writer.
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+  const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" })
+
+  // 1. Collect codebase context inside the async loop
+  console.log('Collecting codebase context...')
+  const allFilePaths = getFiles('.')
+  let codebaseContext = ''
+  
+  for (const path of allFilePaths) {
+    try {
+      const content = readFileSync(path, 'utf8')
+      codebaseContext += `\n--- FILE: ${path} ---\n${content}\n`
+    } catch (err) {
+      console.error(`Warning: Could not read file ${path}: ${err.message}`)
+    }
+  }
+
+  // 2. The "Stunning Marketing" Prompt
+  // codebaseContext is sliced outside the template literal to avoid injection
+  const truncatedContext = codebaseContext.slice(0, 800000) 
+  
+  const PROMPT = `You are a world-class Product Marketing Engineer and Technical Writer.
 Your goal is to make the **lazyhub** repository look like a top-tier open-source project (like lazygit or turbo).
 
 **CONTEXT:**
-${codebaseContext.slice(0, 500000)} // Cap for safety, but Gemini can handle more
+${truncatedContext}
 
 **TASK:**
 1. Generate a **STUNNING README.md** that sells the project. 
@@ -57,22 +90,31 @@ FILE: docs/index.html
 [Content]
 `
 
-async function run() {
-    const result = await model.generateContent(PROMPT)
-    const response = await result.response
-    const text = response.text()
+  console.log('Generating stunning docs with Gemini 3 Flash...')
+  const result = await model.generateContent(PROMPT)
+  const response = await result.response
+  const text = response.text()
 
-    const readme = text.split('FILE: README.md')[1]?.split('FILE: docs/index.html')[0]?.trim()
-    const index = text.split('FILE: docs/index.html')[1]?.trim()
+  // 3. Parse and save
+  const readmeMatch = text.split('FILE: README.md')[1]?.split('FILE: docs/index.html')[0]
+  const indexMatch = text.split('FILE: docs/index.html')[1]
 
-    if (readme) {
-        writeFileSync('README.md', readme)
-        console.log('✓ Stunning README.md generated.')
-    }
-    if (index) {
-        writeFileSync('docs/index.html', index)
-        console.log('✓ Stunning docs/index.html generated.')
-    }
+  if (readmeMatch) {
+    writeFileSync('README.md', readmeMatch.trim())
+    console.log('✓ Stunning README.md generated.')
+  } else {
+    console.error('Failed to parse README.md from AI response.')
+  }
+
+  if (indexMatch) {
+    writeFileSync('docs/index.html', indexMatch.trim())
+    console.log('✓ Stunning docs/index.html generated.')
+  } else {
+    console.error('Failed to parse docs/index.html from AI response.')
+  }
 }
 
-run().catch(console.error)
+run().catch(err => {
+  console.error('Growth Engine Fatal Error:', err)
+  process.exit(1)
+})

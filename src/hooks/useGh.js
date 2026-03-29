@@ -77,22 +77,3 @@ export function useGh(fetchFn, deps = [], { ttl = DEFAULT_TTL } = {}) {
 
   return { data, loading, error, refetch }
 }
-
-/**
- * Invalidate a cache entry by key prefix.
- * @param keyPrefix
- */
-export function invalidateCache(keyPrefix) {
-  for (const key of cache.keys()) {
-    if (key.startsWith(keyPrefix)) {
-      cache.delete(key)
-    }
-  }
-}
-
-/**
- * Clear all cache entries.
- */
-export function clearCache() {
-  cache.clear()
-}

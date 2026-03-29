@@ -33,5 +33,5 @@ jobs:
       - name: Commit and Push Stunning Docs
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "marketing: auto-update stunning README and docs"
+          commit_message: "marketing: auto-update stunning README and docs [skip ci]"
           branch: main
