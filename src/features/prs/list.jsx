@@ -133,8 +133,8 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
   }, [cursor, items.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const showStatus = (msg, isError = false) => {
-    setStatusMsg({ msg, isError })
-    setTimeout(() => setStatusMsg(null), 3000)
+    setStatusMsg({ msg, isError, persist: isError })
+    if (!isError) setTimeout(() => setStatusMsg(null), 3000)
   }
 
   const moveCursor = useCallback((delta) => {
@@ -154,6 +154,7 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
   const closeDialog = useCallback(() => setDialog(null), [])
 
   useInput((input, key) => {
+    if (statusMsg?.persist) { setStatusMsg(null); return }
     if (dialog) return
 
     // gg → top
@@ -454,7 +455,7 @@ export function PRList({ repo, listHeight = 10, onHover, onSelectPR, onOpenDiff,
           <Text color={t.ui.dim}> ({items.length})</Text>
         )}
         {statusMsg && (
-          <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}>  {statusMsg.msg}</Text>
+          <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}>  {statusMsg.msg}{statusMsg.persist ? ' [any key]' : ''}</Text>
         )}
       </Box>
 

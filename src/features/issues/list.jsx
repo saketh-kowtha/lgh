@@ -80,8 +80,8 @@ export function IssueList({ repo, listHeight = 10, onSelectIssue, onPaneState })
   }, [dialog, notifyDialog])
 
   const showStatus = (msg, isError = false) => {
-    setStatusMsg({ msg, isError })
-    setTimeout(() => setStatusMsg(null), 3000)
+    setStatusMsg({ msg, isError, persist: isError })
+    if (!isError) setTimeout(() => setStatusMsg(null), 3000)
   }
 
   const moveCursor = useCallback((delta) => {
@@ -94,6 +94,7 @@ export function IssueList({ repo, listHeight = 10, onSelectIssue, onPaneState })
   }, [items.length, scrollOffset, visibleHeight])
 
   useInput((input, key) => {
+    if (statusMsg?.persist) { setStatusMsg(null); return }
     if (dialog) return
 
     // gg → top
@@ -256,7 +257,7 @@ export function IssueList({ repo, listHeight = 10, onSelectIssue, onPaneState })
         <Text color={filterState === 'open' ? t.issue.open : t.issue.closed} bold>{filterState}</Text>
         <Text color={t.ui.dim}>  [{FK.filterOpen}] open  [{FK.filterClosed}] closed  [n] new</Text>
         {statusMsg && (
-          <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}> {statusMsg.msg}</Text>
+          <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}> {statusMsg.msg}{statusMsg.persist ? ' [any key]' : ''}</Text>
         )}
       </Box>
       <Box flexDirection="column" flexGrow={1}>
