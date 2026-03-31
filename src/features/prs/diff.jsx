@@ -12,7 +12,7 @@ import chalk from 'chalk'
 import hljs from 'highlight.js'
 import { format } from 'timeago.js'
 import { useGh } from '../../hooks/useGh.js'
-import { getPRDiff, listPRComments, addPRLineComment, getPRDiffStats, getPR as getPRMeta, replyToComment, editPRComment, deletePRComment } from '../../executor.js'
+import { getPRDiff, listPRComments, addPRLineComment, getPRDiffStats, getPR as getPRMeta, replyToComment, editPRComment, deletePRComment, mergePR } from '../../executor.js'
 import { OptionPicker } from '../../components/dialogs/OptionPicker.jsx'
 import { FuzzySearch } from '../../components/dialogs/FuzzySearch.jsx'
 import { FooterKeys } from '../../components/FooterKeys.jsx'
@@ -25,6 +25,12 @@ import { TextInput, colorChalk, bgColorChalk, applyThemeStyle, sanitize } from '
 
 const _diffCfg = loadConfig().diff
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+
+const MERGE_OPTIONS = [
+  { value: 'merge',  label: '--merge',  description: 'Create a merge commit' },
+  { value: 'squash', label: '--squash', description: 'Squash all commits into one' },
+  { value: 'rebase', label: '--rebase', description: 'Rebase onto base branch' },
+]
 
 function getLang(filename) {
   if (!filename) return null
@@ -830,6 +836,8 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
 
     if (dialog) return
 
+    if (input === 'm' && prMeta?.state === 'OPEN') { setDialog('merge'); return }
+
     if (input === 'f') { setFileJumpActive(true); return }
 
     // gg → jump to top
@@ -1029,6 +1037,29 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
           <Text color={t.ui.dim}>[Esc] Back</Text>
         </Box>
       </Box>
+    )
+  }
+
+  if (dialog === 'merge') {
+    return (
+      <OptionPicker
+        title={`Merge PR #${prNumber}: ${sanitize(prMeta?.title || '')}`}
+        options={MERGE_OPTIONS}
+        promptText="Commit message (optional)"
+        onSubmit={async (val) => {
+          const strategy = typeof val === 'object' ? val.value : val
+          const msg = typeof val === 'object' ? val.text : undefined
+          setDialog(null)
+          try {
+            await mergePR(repo, prNumber, strategy, msg)
+            onBack()
+          } catch (err) {
+            setCommentStatus(`✗ Merge failed: ${err.message}`)
+            setTimeout(() => setCommentStatus(null), 5000)
+          }
+        }}
+        onCancel={() => setDialog(null)}
+      />
     )
   }
 

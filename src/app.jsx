@@ -139,6 +139,7 @@ const VIEW_KEYS = {
     { key: 'gg / G',         label: 'jump to top / bottom' },
     { key: '[ / ]',          label: 'prev / next file' },
     { key: 'n / N',          label: 'prev / next comment thread' },
+    { key: 'm',              label: 'merge PR (pick strategy)' },
     { key: 'c',              label: 'comment on cursor line' },
     { key: 'v',              label: 'view all comments (tab to comments)' },
     { key: 'r',              label: 'refresh diff' },
