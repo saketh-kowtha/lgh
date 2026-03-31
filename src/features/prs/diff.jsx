@@ -23,8 +23,11 @@ import { useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
 import { TextInput, colorChalk, bgColorChalk, applyThemeStyle, sanitize } from '../../utils.js'
 import { Spinner } from '../../components/Spinner.jsx'
+import { openInEditor } from '../../editor.js'
 
-const _diffCfg = loadConfig().diff
+const _cfg = loadConfig()
+const _diffCfg = _cfg.diff
+const _editorCfg = _cfg.editor
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
 
 const MERGE_OPTIONS_BASE = [
@@ -410,6 +413,7 @@ const FOOTER_KEYS_UNIFIED = [
   { key: ']/[',  label: 'file' },
   { key: 'f',    label: 'jump to file' },
   { key: ':',    label: 'go to line' },
+  { key: 'E',    label: 'open in editor' },
   { key: 'c',    label: 'comment' },
   { key: 'r/e/d', label: 'reply/edit/delete thread' },
   { key: 'n/N',  label: 'next/prev thread or match' },
@@ -428,6 +432,7 @@ const FOOTER_KEYS_SPLIT = [
   { key: ']/[',  label: 'file' },
   { key: 'f',    label: 'jump to file' },
   { key: ':',    label: 'go to line' },
+  { key: 'E',    label: 'open in editor' },
   { key: 'c',    label: 'comment' },
   { key: 'r/e/d', label: 'reply/edit/delete thread' },
   { key: 'n/N',  label: 'next/prev thread or match' },
@@ -841,6 +846,16 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
 
     if (input === 'm' && prMeta?.state === 'OPEN') { setDialog('merge'); return }
 
+    // E — open current file at current line in editor
+    if (input === 'E') {
+      const row = rows[cursor]
+      if (row?.filename) {
+        const line = row.newLine || row.oldLine || 1
+        openInEditor(row.filename, line, _editorCfg).catch(() => {})
+      }
+      return
+    }
+
     if (input === 'f') { setFileJumpActive(true); return }
 
     // gg → jump to top
@@ -1055,16 +1070,42 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
         onSubmit={async (val) => {
           const strategy = typeof val === 'object' ? val.value : val
           const msg = typeof val === 'object' ? val.text : undefined
+          if (strategy === 'admin') {
+            setDialog({ type: 'merge-admin', msg })
+          } else {
+            setDialog(null)
+            try {
+              await mergePR(repo, prNumber, strategy, msg)
+              onBack()
+            } catch (err) {
+              setCommentStatus(`✗ Merge failed: ${err.message}`)
+              setTimeout(() => setCommentStatus(null), 5000)
+            }
+          }
+        }}
+        onCancel={() => setDialog(null)}
+      />
+    )
+  }
+
+  if (dialog?.type === 'merge-admin') {
+    const savedMsg = dialog.msg
+    return (
+      <OptionPicker
+        title={`Merge method (admin bypass) — PR #${prNumber}`}
+        options={MERGE_OPTIONS_BASE}
+        onSubmit={async (val) => {
+          const method = typeof val === 'object' ? val.value : val
           setDialog(null)
           try {
-            await mergePR(repo, prNumber, strategy, msg)
+            await mergePR(repo, prNumber, `admin-${method}`, savedMsg)
             onBack()
           } catch (err) {
             setCommentStatus(`✗ Merge failed: ${err.message}`)
             setTimeout(() => setCommentStatus(null), 5000)
           }
         }}
-        onCancel={() => setDialog(null)}
+        onCancel={() => setDialog('merge')}
       />
     )
   }

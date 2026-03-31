@@ -113,6 +113,15 @@ const DEFAULT_DIFF = {
   maxLines:         2000,
 }
 
+const DEFAULT_EDITOR = {
+  command:       'auto',   // 'auto' | 'vscode' | 'cursor' | 'nvim' | 'vim' | 'idea' | 'webstorm' | 'goland' | 'pycharm' | 'zed' | 'windsurf' | 'emacs' | 'nano' | 'custom'
+  customCommand: null,     // used when command is 'custom', e.g. "code --goto {file}:{line}"
+}
+
+const DEFAULT_IPC = {
+  enabled: true,           // start IPC socket server for IDE integrations
+}
+
 const DEFAULTS = {
   panes:       BUILTIN_PANES,
   defaultPane: 'prs',
@@ -122,6 +131,8 @@ const DEFAULTS = {
   issues:      DEFAULT_ISSUES,
   actions:     DEFAULT_ACTIONS,
   diff:        DEFAULT_DIFF,
+  editor:      DEFAULT_EDITOR,
+  ipc:         DEFAULT_IPC,
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -201,6 +212,8 @@ export function loadConfig() {
       issues:  mergeSection(DEFAULT_ISSUES,  user.issues),
       actions: mergeSection(DEFAULT_ACTIONS, user.actions),
       diff:    mergeSection(DEFAULT_DIFF,    user.diff),
+      editor:  mergeSection(DEFAULT_EDITOR,  user.editor),
+      ipc:     mergeSection(DEFAULT_IPC,     user.ipc),
     }
     // Pass through sensitive/optional top-level fields that don't need schema merging
     if (typeof user.anthropicApiKey === 'string' && user.anthropicApiKey) {

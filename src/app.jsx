@@ -18,6 +18,7 @@ import { ThemeProvider, useTheme, readRawThemeCfg } from './theme.js'
 import { loadConfig } from './config.js'
 import { AppContext } from './context.js'
 import { logger } from './utils.js'
+import { emitIPC, startIPC } from './ipc.js'
 import { Sidebar } from './components/Sidebar.jsx'
 import { StatusBar } from './components/StatusBar.jsx'
 import { FooterKeys } from './components/FooterKeys.jsx'
@@ -412,6 +413,18 @@ function App({ repo }) {
   const openHelp     = useCallback(() => setShowHelp(true), [])
 
   const appCtx = { notifyDialog, openHelp, setMouseEnabled }
+
+  // ─── IPC state broadcast ──────────────────────────────────────────────────
+  useEffect(() => {
+    const ipcState = {
+      repo:        process.env.GHUI_REPO || null,
+      pane,
+      view,
+      prNumber:    (pane === 'prs' && selectedItem) ? selectedItem.number : null,
+      issueNumber: (pane === 'issues' && selectedItem) ? selectedItem.number : null,
+    }
+    emitIPC('view-changed', ipcState)
+  }, [pane, view, selectedItem])
 
   // ─── Layout breakpoints ───────────────────────────────────────────────────
   const showSidebar     = columns >= 80

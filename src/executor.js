@@ -146,8 +146,11 @@ export async function mergePR(repo, number, strategy = 'merge', commitMessage) {
     'pr', 'merge', String(number),
     '--repo', getRepo(repo),
   ]
-  if (strategy === 'admin') {
+  // strategy may be 'admin-merge' | 'admin-squash' | 'admin-rebase' (admin + method)
+  // or plain 'merge' | 'squash' | 'rebase'
+  if (strategy.startsWith('admin-')) {
     args.push('--admin')
+    args.push(`--${strategy.slice('admin-'.length)}`)
   } else {
     args.push(`--${strategy}`)
   }
