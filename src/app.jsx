@@ -602,7 +602,7 @@ function App({ repo }) {
 
     return (
       <AppContext.Provider value={appCtx}>
-        <Box flexDirection="column">
+        <Box flexDirection="column" height={rows}>
           <Box borderStyle="single" borderColor={t.ui.selected} flexDirection="column" flexGrow={1}>
             <ErrorBoundary>
               <DetailPane
