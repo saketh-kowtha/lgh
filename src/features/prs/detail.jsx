@@ -21,11 +21,12 @@ import { useTheme } from '../../theme.js'
 import { sanitize, getMarkdownRows, TextInput } from '../../utils.js'
 import { Spinner } from '../../components/Spinner.jsx'
 
-const MERGE_OPTIONS = [
+const MERGE_OPTIONS_BASE = [
   { value: 'merge',  label: '--merge',  description: 'Create a merge commit' },
   { value: 'squash', label: '--squash', description: 'Squash all commits into one' },
   { value: 'rebase', label: '--rebase', description: 'Rebase onto base branch' },
 ]
+const MERGE_OPTION_ADMIN = { value: 'admin', label: '--admin', description: 'Bypass branch protection (admin only)' }
 
 function reviewStatusIcon(state, t) {
   switch (state) {
@@ -345,10 +346,13 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
   // ── Dialogs ────────────────────────────────────────────────────────────────
 
   if (dialog === 'merge') {
+    const mergeOpts = repoInfo?.viewerPermission === 'ADMIN'
+      ? [...MERGE_OPTIONS_BASE, MERGE_OPTION_ADMIN]
+      : MERGE_OPTIONS_BASE
     return (
       <OptionPicker
         title={`Merge PR #${pr.number}: ${pr.title}`}
-        options={MERGE_OPTIONS}
+        options={mergeOpts}
         promptText="Commit message (optional)"
         onSubmit={async (val) => {
           const strategy = typeof val === 'object' ? val.value : val

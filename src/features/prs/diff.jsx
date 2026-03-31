@@ -12,7 +12,7 @@ import chalk from 'chalk'
 import hljs from 'highlight.js'
 import { format } from 'timeago.js'
 import { useGh } from '../../hooks/useGh.js'
-import { getPRDiff, listPRComments, addPRLineComment, getPRDiffStats, getPR as getPRMeta, replyToComment, editPRComment, deletePRComment, mergePR } from '../../executor.js'
+import { getPRDiff, listPRComments, addPRLineComment, getPRDiffStats, getPR as getPRMeta, replyToComment, editPRComment, deletePRComment, mergePR, getRepoInfo } from '../../executor.js'
 import { OptionPicker } from '../../components/dialogs/OptionPicker.jsx'
 import { FuzzySearch } from '../../components/dialogs/FuzzySearch.jsx'
 import { FooterKeys } from '../../components/FooterKeys.jsx'
@@ -27,11 +27,12 @@ import { Spinner } from '../../components/Spinner.jsx'
 const _diffCfg = loadConfig().diff
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
 
-const MERGE_OPTIONS = [
+const MERGE_OPTIONS_BASE = [
   { value: 'merge',  label: '--merge',  description: 'Create a merge commit' },
   { value: 'squash', label: '--squash', description: 'Squash all commits into one' },
   { value: 'rebase', label: '--rebase', description: 'Rebase onto base branch' },
 ]
+const MERGE_OPTION_ADMIN = { value: 'admin', label: '--admin', description: 'Bypass branch protection (admin only)' }
 
 function getLang(filename) {
   if (!filename) return null
@@ -549,6 +550,7 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
   const [diffWarningAck, setDiffWarningAck] = useState(false)
 
   const { data: prMeta } = useGh(getPRMeta, [repo, prNumber], { ttl: 300_000 })
+  const { data: repoInfo } = useGh(getRepoInfo, [repo], { ttl: 300_000 })
   const headRefOid = /^[0-9a-f]{40}$/.test(prMeta?.headRefOid) ? prMeta.headRefOid : null
   const { data: diffText, loading, error, refetch } = useGh(getPRDiff, [repo, prNumber])
   const { data: comments } = useGh(listPRComments, [repo, prNumber])
@@ -1042,10 +1044,13 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
   }
 
   if (dialog === 'merge') {
+    const mergeOpts = repoInfo?.viewerPermission === 'ADMIN'
+      ? [...MERGE_OPTIONS_BASE, MERGE_OPTION_ADMIN]
+      : MERGE_OPTIONS_BASE
     return (
       <OptionPicker
         title={`Merge PR #${prNumber}: ${sanitize(prMeta?.title || '')}`}
-        options={MERGE_OPTIONS}
+        options={mergeOpts}
         promptText="Commit message (optional)"
         onSubmit={async (val) => {
           const strategy = typeof val === 'object' ? val.value : val

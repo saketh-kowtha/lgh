@@ -145,8 +145,12 @@ export async function mergePR(repo, number, strategy = 'merge', commitMessage) {
   const args = [
     'pr', 'merge', String(number),
     '--repo', getRepo(repo),
-    `--${strategy}`,
   ]
+  if (strategy === 'admin') {
+    args.push('--admin')
+  } else {
+    args.push(`--${strategy}`)
+  }
   if (commitMessage) args.push('--subject', commitMessage)
   return run(args)
 }
@@ -823,7 +827,7 @@ export async function createPR(repo, { title, body, head, base, draft = false, l
 export async function getRepoInfo(repo) {
   const args = [
     'repo', 'view', getRepo(repo),
-    '--json', 'name,owner,defaultBranchRef,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,autoMergeAllowed,deleteBranchOnMerge',
+    '--json', 'name,owner,defaultBranchRef,squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,autoMergeAllowed,deleteBranchOnMerge,viewerPermission',
   ]
   return run(args)
 }
