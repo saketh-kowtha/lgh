@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog.jsx'
 import { LogViewer } from '../../components/dialogs/LogViewer.jsx'
 import { AppContext } from '../../context.js'
 import { useTheme } from '../../theme.js'
+import { Spinner } from '../../components/Spinner.jsx'
 
 function StatusBadge({ run }) {
   const { t } = useTheme()
@@ -139,7 +140,7 @@ export function ActionList({ repo, listHeight = 10, onPaneState }) {
     if (logLoading) {
       return (
         <Box flexDirection="column" flexGrow={1} paddingX={1}>
-          <Text color={t.ui.muted}>Loading logs...</Text>
+          <Box gap={1}><Spinner /><Text color={t.ui.muted}>Loading logs…</Text></Box>
         </Box>
       )
     }

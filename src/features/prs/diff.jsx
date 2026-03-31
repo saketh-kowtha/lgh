@@ -22,6 +22,7 @@ import { loadConfig } from '../../config.js'
 import { useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
 import { TextInput, colorChalk, bgColorChalk, applyThemeStyle, sanitize } from '../../utils.js'
+import { Spinner } from '../../components/Spinner.jsx'
 
 const _diffCfg = loadConfig().diff
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
@@ -1065,7 +1066,7 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
 
   if (loading) return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
-      <Text color={t.ui.muted}>Loading diff…</Text>
+      <Box gap={1}><Spinner /><Text color={t.ui.muted}>Loading diff…</Text></Box>
     </Box>
   )
   if (error) return (

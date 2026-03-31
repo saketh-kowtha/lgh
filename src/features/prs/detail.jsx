@@ -19,6 +19,7 @@ import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog.jsx'
 import { AppContext } from '../../context.js'
 import { useTheme } from '../../theme.js'
 import { sanitize, getMarkdownRows, TextInput } from '../../utils.js'
+import { Spinner } from '../../components/Spinner.jsx'
 
 const MERGE_OPTIONS = [
   { value: 'merge',  label: '--merge',  description: 'Create a merge commit' },
@@ -325,7 +326,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
   if (loading) {
     return (
       <Box flexDirection="column" flexGrow={1} paddingX={2} paddingY={1}>
-        <Text color={t.ui.muted}>Loading PR #{prNumber}…</Text>
+        <Box gap={1}><Spinner /><Text color={t.ui.muted}>Loading PR #{prNumber}…</Text></Box>
       </Box>
     )
   }
