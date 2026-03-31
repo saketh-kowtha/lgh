@@ -10,10 +10,11 @@ import { useGh } from '../../hooks/useGh.js'
 import {
   getPR, listLabels, listCollaborators, addLabels, removeLabels,
   getRepoInfo, getPRChecks, getBranchProtection,
-  enableAutoMerge, disableAutoMerge, mergePR,
+  enableAutoMerge, disableAutoMerge, mergePR, closePR,
 } from '../../executor.js'
 import { MultiSelect } from '../../components/dialogs/MultiSelect.jsx'
 import { OptionPicker } from '../../components/dialogs/OptionPicker.jsx'
+import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog.jsx'
 import { AppContext } from '../../context.js'
 import { useTheme } from '../../theme.js'
 import { sanitize, getMarkdownRows } from '../../utils.js'
@@ -275,6 +276,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
     if (input === 'A') { setDialog('assignees'); return }
     if (input === '/') { setSearching(true); setSearchText(''); return }
     if (input === 'm' && pr && pr.state === 'OPEN') { setDialog('merge'); return }
+    if (input === 'X' && pr && pr.state === 'OPEN') { setDialog('close'); return }
     if (input === 'M' && pr && pr.state === 'OPEN' && !pr.isDraft) {
       if (pr.autoMergeRequest) {
         disableAutoMerge(repo, prNumber)
@@ -344,6 +346,21 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
           const msg = typeof val === 'object' ? val.text : undefined
           setDialog(null)
           try { await mergePR(repo, pr.number, strategy, msg); refetch() } catch (err) { showStatus(`✗ Merge failed: ${err.message}`, true) }
+        }}
+        onCancel={() => setDialog(null)}
+      />
+    )
+  }
+
+  if (dialog === 'close') {
+    return (
+      <ConfirmDialog
+        message={`Close PR #${pr.number}: ${pr.title}?`}
+        destructive={true}
+        onConfirm={async () => {
+          setDialog(null)
+          try { await closePR(repo, pr.number); refetch() }
+          catch (err) { showStatus(`✗ Close failed: ${err.message}`, true) }
         }}
         onCancel={() => setDialog(null)}
       />
