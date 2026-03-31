@@ -152,6 +152,8 @@ const VIEW_KEYS = {
     { key: 'a',              label: 'approve PR' },
     { key: 'x',              label: 'request changes' },
     { key: 'X',              label: 'close PR' },
+    { key: 'D',              label: 'toggle draft / ready' },
+    { key: 'B',              label: 'change base branch' },
     { key: 'l',              label: 'edit labels' },
     { key: 'A',              label: 'edit assignees' },
     { key: 'r',              label: 'refresh' },

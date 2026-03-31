@@ -11,13 +11,14 @@ import {
   getPR, listLabels, listCollaborators, addLabels, removeLabels,
   getRepoInfo, getPRChecks, getBranchProtection,
   enableAutoMerge, disableAutoMerge, mergePR, closePR,
+  markPRReady, convertPRToDraft, editPRBase,
 } from '../../executor.js'
 import { MultiSelect } from '../../components/dialogs/MultiSelect.jsx'
 import { OptionPicker } from '../../components/dialogs/OptionPicker.jsx'
 import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog.jsx'
 import { AppContext } from '../../context.js'
 import { useTheme } from '../../theme.js'
-import { sanitize, getMarkdownRows } from '../../utils.js'
+import { sanitize, getMarkdownRows, TextInput } from '../../utils.js'
 
 const MERGE_OPTIONS = [
   { value: 'merge',  label: '--merge',  description: 'Create a merge commit' },
@@ -219,6 +220,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
   const [searching, setSearching] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [statusMsg, setStatusMsg] = useState(null)
+  const [baseInput, setBaseInput] = useState('')
   const lastKeyRef   = useRef(null)
   const lastKeyTimer = useRef(null)
 
@@ -268,6 +270,10 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
       return
     }
 
+    if (dialog === 'base') {
+      if (key.escape) { setDialog(null); setBaseInput(''); return }
+      return
+    }
     if (dialog) return
 
     if (input === 'r') { refetch(); return }
@@ -277,6 +283,8 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
     if (input === '/') { setSearching(true); setSearchText(''); return }
     if (input === 'm' && pr && pr.state === 'OPEN') { setDialog('merge'); return }
     if (input === 'X' && pr && pr.state === 'OPEN') { setDialog('close'); return }
+    if (input === 'D' && pr && pr.state === 'OPEN') { setDialog('draft'); return }
+    if (input === 'B' && pr && pr.state === 'OPEN') { setDialog('base'); return }
     if (input === 'M' && pr && pr.state === 'OPEN' && !pr.isDraft) {
       if (pr.autoMergeRequest) {
         disableAutoMerge(repo, prNumber)
@@ -364,6 +372,61 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
         }}
         onCancel={() => setDialog(null)}
       />
+    )
+  }
+
+  if (dialog === 'draft') {
+    const DRAFT_OPTIONS = pr.isDraft
+      ? [{ value: 'ready', label: 'Mark ready for review', description: 'Remove draft status' }]
+      : [
+          { value: 'ready', label: 'Mark ready for review', description: 'Remove draft status' },
+          { value: 'draft', label: 'Convert to draft', description: 'Mark as work in progress' },
+        ]
+    return (
+      <OptionPicker
+        title={`PR #${pr.number}: Change draft state`}
+        options={DRAFT_OPTIONS}
+        onSubmit={async (val) => {
+          const action = typeof val === 'object' ? val.value : val
+          setDialog(null)
+          try {
+            if (action === 'ready') await markPRReady(repo, pr.number)
+            else await convertPRToDraft(repo, pr.number)
+            showStatus(action === 'ready' ? '✓ Marked ready for review' : '✓ Converted to draft')
+            refetch()
+          } catch (err) { showStatus(`✗ Failed: ${err.message}`, true) }
+        }}
+        onCancel={() => setDialog(null)}
+      />
+    )
+  }
+
+  if (dialog === 'base') {
+    return (
+      <Box flexDirection="column" flexGrow={1} paddingX={2} paddingY={1}>
+        <Text color={t.ui.selected} bold>Change base branch</Text>
+        <Text color={t.ui.dim}>Current: {pr.baseRefName}</Text>
+        <Box marginTop={1} gap={1}>
+          <Text color={t.ui.muted}>New base: </Text>
+          <TextInput
+            value={baseInput}
+            onChange={setBaseInput}
+            placeholder={pr.baseRefName}
+            focus={true}
+            onEnter={async () => {
+              const newBase = baseInput.trim()
+              if (!newBase || newBase === pr.baseRefName) { setDialog(null); return }
+              setDialog(null)
+              try {
+                await editPRBase(repo, pr.number, newBase)
+                showStatus(`✓ Base branch changed to ${newBase}`)
+                refetch()
+              } catch (err) { showStatus(`✗ Failed: ${err.message}`, true) }
+            }}
+          />
+        </Box>
+        <Text color={t.ui.dim} marginTop={1}>[Enter] confirm  [Esc] cancel</Text>
+      </Box>
     )
   }
 

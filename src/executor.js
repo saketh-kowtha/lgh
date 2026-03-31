@@ -161,6 +161,21 @@ export async function closePR(repo, number) {
   return run(args)
 }
 
+export async function markPRReady(repo, number) {
+  const args = ['pr', 'ready', String(number), '--repo', getRepo(repo)]
+  return run(args)
+}
+
+export async function convertPRToDraft(repo, number) {
+  const args = ['pr', 'ready', '--undo', String(number), '--repo', getRepo(repo)]
+  return run(args)
+}
+
+export async function editPRBase(repo, number, newBase) {
+  const args = ['pr', 'edit', String(number), '--repo', getRepo(repo), '--base', newBase]
+  return run(args)
+}
+
 /**
  * Create a PR review (approve or request-changes).
  * @param repo
