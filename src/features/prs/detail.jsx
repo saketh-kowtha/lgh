@@ -217,8 +217,14 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
   const [dialog, setDialog]   = useState(null)
   const [searching, setSearching] = useState(false)
   const [searchText, setSearchText] = useState('')
+  const [statusMsg, setStatusMsg] = useState(null)
   const lastKeyRef   = useRef(null)
   const lastKeyTimer = useRef(null)
+
+  const showStatus = (msg, isError = false) => {
+    setStatusMsg({ msg, isError, persist: isError })
+    if (!isError) setTimeout(() => setStatusMsg(null), 3000)
+  }
 
   React.useEffect(() => {
     notifyDialog(!!dialog)
@@ -249,6 +255,9 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
   const visibleRows   = filteredRows.slice(scrollY, scrollY + visibleHeight)
 
   useInput((input, key) => {
+    // Dismiss persistent error on any keypress
+    if (statusMsg?.persist) { setStatusMsg(null); return }
+
     // Search mode captures all typing
     if (searching) {
       if (key.escape) { setSearching(false); setSearchText(''); return }
@@ -268,10 +277,10 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
     if (input === 'm' && pr && pr.state === 'OPEN') { setDialog('merge'); return }
     if (input === 'M' && pr && pr.state === 'OPEN' && !pr.isDraft) {
       if (pr.autoMergeRequest) {
-        disableAutoMerge(repo, prNumber).then(() => refetch()).catch(() => {})
+        disableAutoMerge(repo, prNumber).then(() => refetch()).catch(err => showStatus(`✗ Failed: ${err.message}`, true))
       } else {
         enableAutoMerge(repo, prNumber, repoInfo?.squashMergeAllowed ? 'squash' : 'merge')
-          .then(() => refetch()).catch(() => {})
+          .then(() => refetch()).catch(err => showStatus(`✗ Failed: ${err.message}`, true))
       }
       return
     }
@@ -331,7 +340,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
           const strategy = typeof val === 'object' ? val.value : val
           const msg = typeof val === 'object' ? val.text : undefined
           setDialog(null)
-          try { await mergePR(repo, pr.number, strategy, msg); refetch() } catch { /* ignore */ }
+          try { await mergePR(repo, pr.number, strategy, msg); refetch() } catch (err) { showStatus(`✗ Merge failed: ${err.message}`, true) }
         }}
         onCancel={() => setDialog(null)}
       />
@@ -339,11 +348,11 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
   }
 
   if (dialog === 'labels') {
-    return <PRLabelDialog repo={repo} pr={pr} onClose={() => { setDialog(null); refetch() }} />
+    return <PRLabelDialog repo={repo} pr={pr} onClose={() => { setDialog(null); refetch() }} onError={(msg) => { setDialog(null); showStatus(msg, true) }} />
   }
 
   if (dialog === 'assignees') {
-    return <PRAssigneeDialog repo={repo} pr={pr} onClose={() => { setDialog(null); refetch() }} />
+    return <PRAssigneeDialog repo={repo} pr={pr} onClose={() => { setDialog(null); refetch() }} onError={(msg) => { setDialog(null); showStatus(msg, true) }} />
   }
 
   // ── Detail view ────────────────────────────────────────────────────────────
@@ -396,11 +405,13 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
 
       {/* ── Hint line ── */}
       <Box paddingX={1} justifyContent="space-between">
-        {maxScroll > 0
-          ? <Text color={t.ui.dim}>{scrollY + 1}–{Math.min(scrollY + visibleHeight, filteredRows.length)} / {filteredRows.length}  [j/k] scroll  [gg/G] top/bottom</Text>
-          : <Text color={t.ui.dim}>[d] diff  [m] merge  [l] labels  [A] assignees  [M] auto-merge  [r] refresh</Text>
+        {statusMsg
+          ? <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}>{statusMsg.msg}{statusMsg.persist ? '  [any key to dismiss]' : ''}</Text>
+          : maxScroll > 0
+            ? <Text color={t.ui.dim}>{scrollY + 1}–{Math.min(scrollY + visibleHeight, filteredRows.length)} / {filteredRows.length}  [j/k] scroll  [gg/G] top/bottom</Text>
+            : <Text color={t.ui.dim}>[d] diff  [m] merge  [M] auto-merge  [l] labels  [A] assignees  [r] refresh</Text>
         }
-        <Text color={t.ui.dim}>[/] search  [Esc] back</Text>
+        <Text color={t.ui.dim}>[/] search  [?] help  [Esc] back</Text>
       </Box>
     </Box>
   )
@@ -408,7 +419,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
 
 // ─── Sub-dialogs ──────────────────────────────────────────────────────────────
 
-function PRLabelDialog({ repo, pr, onClose }) {
+function PRLabelDialog({ repo, pr, onClose, onError }) {
   const { t } = useTheme()
   const { data: allLabels, loading } = useGh(listLabels, [repo])
   if (loading) return <Box paddingX={1}><Text color={t.ui.muted}>Loading labels…</Text></Box>
@@ -430,7 +441,7 @@ function PRLabelDialog({ repo, pr, onClose }) {
         try {
           if (toAdd.length)    await addLabels(repo, pr.number, toAdd, 'pr')
           if (toRemove.length) await removeLabels(repo, pr.number, toRemove, 'pr')
-        } catch { /* ignore */ }
+        } catch (err) { onError?.(`✗ Label update failed: ${err.message}`) }
         onClose()
       }}
       onCancel={onClose}
@@ -438,7 +449,7 @@ function PRLabelDialog({ repo, pr, onClose }) {
   )
 }
 
-function PRAssigneeDialog({ repo, pr, onClose }) {
+function PRAssigneeDialog({ repo, pr, onClose, onError }) {
   const { t } = useTheme()
   const { data: collabs, loading } = useGh(listCollaborators, [repo])
   if (loading) return <Box paddingX={1}><Text color={t.ui.muted}>Loading collaborators…</Text></Box>
@@ -459,7 +470,7 @@ function PRAssigneeDialog({ repo, pr, onClose }) {
             await execa('gh', ['pr', 'edit', String(pr.number), '--repo', repo,
               '--add-assignee', selectedIds.join(',')])
           }
-        } catch { /* ignore */ }
+        } catch (err) { onError?.(`✗ Assignee update failed: ${err.message}`) }
         onClose()
       }}
       onCancel={onClose}
