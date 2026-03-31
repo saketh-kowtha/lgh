@@ -1070,16 +1070,42 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
         onSubmit={async (val) => {
           const strategy = typeof val === 'object' ? val.value : val
           const msg = typeof val === 'object' ? val.text : undefined
+          if (strategy === 'admin') {
+            setDialog({ type: 'merge-admin', msg })
+          } else {
+            setDialog(null)
+            try {
+              await mergePR(repo, prNumber, strategy, msg)
+              onBack()
+            } catch (err) {
+              setCommentStatus(`✗ Merge failed: ${err.message}`)
+              setTimeout(() => setCommentStatus(null), 5000)
+            }
+          }
+        }}
+        onCancel={() => setDialog(null)}
+      />
+    )
+  }
+
+  if (dialog?.type === 'merge-admin') {
+    const savedMsg = dialog.msg
+    return (
+      <OptionPicker
+        title={`Merge method (admin bypass) — PR #${prNumber}`}
+        options={MERGE_OPTIONS_BASE}
+        onSubmit={async (val) => {
+          const method = typeof val === 'object' ? val.value : val
           setDialog(null)
           try {
-            await mergePR(repo, prNumber, strategy, msg)
+            await mergePR(repo, prNumber, `admin-${method}`, savedMsg)
             onBack()
           } catch (err) {
             setCommentStatus(`✗ Merge failed: ${err.message}`)
             setTimeout(() => setCommentStatus(null), 5000)
           }
         }}
-        onCancel={() => setDialog(null)}
+        onCancel={() => setDialog('merge')}
       />
     )
   }

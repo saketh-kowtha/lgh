@@ -27,6 +27,7 @@
  */
 
 import { createServer, createConnection } from 'net'
+import { join } from 'path'
 import { homedir } from 'os'
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'fs'
 

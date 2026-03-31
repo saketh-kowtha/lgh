@@ -368,10 +368,31 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
         onSubmit={async (val) => {
           const strategy = typeof val === 'object' ? val.value : val
           const msg = typeof val === 'object' ? val.text : undefined
-          setDialog(null)
-          try { await mergePR(repo, pr.number, strategy, msg); refetch() } catch (err) { showStatus(`✗ Merge failed: ${err.message}`, true) }
+          if (strategy === 'admin') {
+            // --admin bypasses branch protection but still needs a merge method
+            setDialog({ type: 'merge-admin', msg })
+          } else {
+            setDialog(null)
+            try { await mergePR(repo, pr.number, strategy, msg); refetch() } catch (err) { showStatus(`✗ Merge failed: ${err.message}`, true) }
+          }
         }}
         onCancel={() => setDialog(null)}
+      />
+    )
+  }
+
+  if (dialog?.type === 'merge-admin') {
+    const savedMsg = dialog.msg
+    return (
+      <OptionPicker
+        title={`Merge method (admin bypass) — PR #${pr.number}`}
+        options={MERGE_OPTIONS_BASE}
+        onSubmit={async (val) => {
+          const method = typeof val === 'object' ? val.value : val
+          setDialog(null)
+          try { await mergePR(repo, pr.number, `admin-${method}`, savedMsg); refetch() } catch (err) { showStatus(`✗ Merge failed: ${err.message}`, true) }
+        }}
+        onCancel={() => setDialog('merge')}
       />
     )
   }
