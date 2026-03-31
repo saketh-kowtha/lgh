@@ -21,6 +21,10 @@ import { useTheme } from '../../theme.js'
 import { sanitize, getMarkdownRows, TextInput } from '../../utils.js'
 import { Spinner } from '../../components/Spinner.jsx'
 import { PRDetailSkeleton } from '../../components/Skeleton.jsx'
+import { openInEditor, editorLabel } from '../../editor.js'
+import { loadConfig } from '../../config.js'
+
+const _editorCfg = loadConfig().editor
 
 const MERGE_OPTIONS_BASE = [
   { value: 'merge',  label: '--merge',  description: 'Create a merge commit' },
@@ -281,6 +285,16 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
 
     if (input === 'r') { refetch(); return }
     if (input === 'd' && pr) { onOpenDiff(pr); return }
+
+    // E — open first changed file of this PR in the local editor
+    if (input === 'E' && pr) {
+      const files = pr.files || []
+      if (files.length > 0) {
+        openInEditor(files[0].path, 1, _editorCfg).catch(() => {})
+      }
+      return
+    }
+
     if (input === 'l') { setDialog('labels'); return }
     if (input === 'A') { setDialog('assignees'); return }
     if (input === '/') { setSearching(true); setSearchText(''); return }
@@ -494,7 +508,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff }) {
           ? <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}>{statusMsg.msg}{statusMsg.persist ? '  [any key to dismiss]' : ''}</Text>
           : maxScroll > 0
             ? <Text color={t.ui.dim}>{scrollY + 1}–{Math.min(scrollY + visibleHeight, filteredRows.length)} / {filteredRows.length}  [j/k] scroll  [gg/G] top/bottom</Text>
-            : <Text color={t.ui.dim}>[d] diff  [m] merge  [M] auto-merge  [l] labels  [A] assignees  [r] refresh</Text>
+            : <Text color={t.ui.dim}>[d] diff  [E] open in editor  [m] merge  [M] auto-merge  [l] labels  [A] assignees  [r] refresh</Text>
         }
         <Text color={t.ui.dim}>[/] search  [?] help  [Esc] back</Text>
       </Box>

@@ -1,0 +1,90 @@
+{
+  "name": "lazyhub",
+  "displayName": "LazyHub",
+  "description": "GitHub TUI integration — open PRs, issues, and diffs without leaving VS Code",
+  "version": "0.1.0",
+  "publisher": "saketh-kowtha",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saketh-kowtha/lazyhub.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["github", "git", "pull-request", "tui", "lazyhub"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "lazyhub.open",
+        "title": "LazyHub: Open",
+        "category": "LazyHub"
+      },
+      {
+        "command": "lazyhub.openPR",
+        "title": "LazyHub: Open PR for current branch",
+        "category": "LazyHub"
+      },
+      {
+        "command": "lazyhub.showDiagnostics",
+        "title": "LazyHub: Load PR review comments as diagnostics",
+        "category": "LazyHub"
+      },
+      {
+        "command": "lazyhub.showState",
+        "title": "LazyHub: Show IPC state",
+        "category": "LazyHub"
+      },
+      {
+        "command": "lazyhub.blamePR",
+        "title": "LazyHub: Open PR for line under cursor (blame)",
+        "category": "LazyHub"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "lazyhub.open",
+        "key": "ctrl+g h",
+        "mac": "cmd+g h",
+        "when": "!terminalFocus"
+      },
+      {
+        "command": "lazyhub.openPR",
+        "key": "ctrl+g p",
+        "mac": "cmd+g p",
+        "when": "!terminalFocus"
+      }
+    ],
+    "configuration": {
+      "title": "LazyHub",
+      "properties": {
+        "lazyhub.terminalName": {
+          "type": "string",
+          "default": "lazyhub",
+          "description": "Name for the integrated terminal panel"
+        },
+        "lazyhub.reuseTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reuse an existing lazyhub terminal instead of opening a new one"
+        },
+        "lazyhub.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show PR status in the status bar"
+        },
+        "lazyhub.autoLoadDiagnostics": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically load PR review comments as editor diagnostics"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "net": "*"
+  }
+}

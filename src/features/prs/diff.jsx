@@ -23,8 +23,11 @@ import { useTheme } from '../../theme.js'
 import { AppContext } from '../../context.js'
 import { TextInput, colorChalk, bgColorChalk, applyThemeStyle, sanitize } from '../../utils.js'
 import { Spinner } from '../../components/Spinner.jsx'
+import { openInEditor } from '../../editor.js'
 
-const _diffCfg = loadConfig().diff
+const _cfg = loadConfig()
+const _diffCfg = _cfg.diff
+const _editorCfg = _cfg.editor
 const stripAnsi = s => (s || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
 
 const MERGE_OPTIONS_BASE = [
@@ -410,6 +413,7 @@ const FOOTER_KEYS_UNIFIED = [
   { key: ']/[',  label: 'file' },
   { key: 'f',    label: 'jump to file' },
   { key: ':',    label: 'go to line' },
+  { key: 'E',    label: 'open in editor' },
   { key: 'c',    label: 'comment' },
   { key: 'r/e/d', label: 'reply/edit/delete thread' },
   { key: 'n/N',  label: 'next/prev thread or match' },
@@ -428,6 +432,7 @@ const FOOTER_KEYS_SPLIT = [
   { key: ']/[',  label: 'file' },
   { key: 'f',    label: 'jump to file' },
   { key: ':',    label: 'go to line' },
+  { key: 'E',    label: 'open in editor' },
   { key: 'c',    label: 'comment' },
   { key: 'r/e/d', label: 'reply/edit/delete thread' },
   { key: 'n/N',  label: 'next/prev thread or match' },
@@ -840,6 +845,16 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
     if (dialog) return
 
     if (input === 'm' && prMeta?.state === 'OPEN') { setDialog('merge'); return }
+
+    // E — open current file at current line in editor
+    if (input === 'E') {
+      const row = rows[cursor]
+      if (row?.filename) {
+        const line = row.newLine || row.oldLine || 1
+        openInEditor(row.filename, line, _editorCfg).catch(() => {})
+      }
+      return
+    }
 
     if (input === 'f') { setFileJumpActive(true); return }
 
