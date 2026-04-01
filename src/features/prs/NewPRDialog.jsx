@@ -351,8 +351,9 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
     // Ctrl+Enter OR Ctrl+S — Ctrl+Enter is indistinguishable from Enter on macOS terminals
     if ((key.return && key.ctrl) || (key.ctrl && input === 'g')) { doSubmit(); return }
 
-    // [p] trigger push from form when head has issues
-    if (input === 'p' && FIELDS[activeField] === 'head') {
+    // [p] trigger push whenever head branch has issues — available from any field
+    // NOTE: must be checked before field-level text editing so 'p' is not typed into inputs
+    if (input === 'p') {
       if (headStatus === 'not-in-remote') { setScreen('push-required'); return }
       if (headStatus === 'unpushed')      { setScreen('unpushed-commits'); return }
     }
@@ -369,7 +370,7 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
 
     // Text editing is now handled by TextInput components for title, head, base
     // For body (multiline), we still do basic appending if not using editor
-    if (fieldName === 'body') {
+    if (fieldName === 'body' && headStatus !== 'not-in-remote' && headStatus !== 'unpushed') {
       if (key.backspace || key.delete) {
         setForm(f => ({ ...f, body: (f.body || '').slice(0, -1) }))
         return
@@ -431,6 +432,9 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
   const maxWidth = Math.min(cols - 6, 72)
   const isHeadField   = FIELDS[activeField] === 'head'
   const isBaseField   = FIELDS[activeField] === 'base'
+  // Disable all text inputs while head branch needs pushing — prevents 'p' from
+  // being typed into a field and the push shortcut corrupting form.head
+  const inputsBlocked = headStatus === 'not-in-remote' || headStatus === 'unpushed'
   const canSubmit     = form.title && form.head && form.base
     && headStatus !== 'not-in-remote'
     && baseStatus !== 'not-found'
@@ -457,7 +461,7 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
           <TextInput
             value={form.title}
             onChange={(v) => setForm(f => ({ ...f, title: v }))}
-            focus={FIELDS[activeField] === 'title'}
+            focus={FIELDS[activeField] === 'title' && !inputsBlocked}
             onEnter={goNext}
           />
         </Box>
@@ -499,7 +503,7 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
               setHeadStatus(null)
               lastValidatedHead.current = ''
             }}
-            focus={isHeadField}
+            focus={isHeadField && !inputsBlocked}
             onEnter={goNext}
           />
         </Box>
@@ -528,7 +532,7 @@ export function NewPRDialog({ repo, onClose, onCreated }) {
               setBaseStatus(null)
               lastValidatedBase.current = ''
             }}
-            focus={isBaseField}
+            focus={isBaseField && !inputsBlocked}
             onEnter={goNext}
           />
         </Box>
