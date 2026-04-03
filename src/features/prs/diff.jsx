@@ -1060,7 +1060,7 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
   }
 
   if (dialog === 'merge') {
-    const mergeOpts = repoInfo?.viewerPermission === 'ADMIN'
+    const mergeOpts = !repoInfo || repoInfo.viewerPermission === 'ADMIN'
       ? [...MERGE_OPTIONS_BASE, MERGE_OPTION_ADMIN]
       : MERGE_OPTIONS_BASE
     return (
@@ -1121,11 +1121,10 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
   )
 
   const colWidth = Math.floor(((stdout?.columns || 80) - 2) / 2)
-  const MAX_ROWS = _diffCfg.maxLines || 2000
-  const displayRows = rows.length > MAX_ROWS ? rows.slice(0, MAX_ROWS) : rows
   const composeBoxHeight = compose ? 6 : 0
-  const effectiveHeight = Math.max(3, visibleHeight - composeBoxHeight)
-  const visibleRows = displayRows.slice(scrollOffset, scrollOffset + effectiveHeight)
+  const effectiveHeight  = Math.max(3, visibleHeight - composeBoxHeight)
+  // No row cap — virtual slice keeps rendering O(visibleHeight) regardless of diff size
+  const visibleRows = rows.slice(scrollOffset, scrollOffset + effectiveHeight)
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -1163,7 +1162,7 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
           </>
         ) : (
           splitView
-            ? renderSplitView(displayRows, scrollOffset, effectiveHeight, cursor, langCache, colWidth, t)
+            ? renderSplitView(rows, scrollOffset, effectiveHeight, cursor, langCache, colWidth, t)
             : visibleRows.map((row, i) => {
                 const idx = scrollOffset + i
                 const isSelected = idx === cursor
@@ -1186,12 +1185,6 @@ export function PRDiff({ prNumber, repo, onBack, onViewComments }) {
               })
         )}
       </Box>
-
-      {rows.length > MAX_ROWS && (
-        <Box paddingX={1}>
-          <Text color={t.ci.pending}>⚠ Diff truncated at {MAX_ROWS} rows — [o] open in browser for full diff</Text>
-        </Box>
-      )}
 
       {fileJumpActive && (
         <Box flexDirection="column" borderStyle="round" borderColor={t.ui.selected} paddingX={1} marginX={1}>

@@ -40,13 +40,14 @@ const ActionRow = memo(({ run, isSelected, t }) => {
   )
 })
 
-export function ActionList({ repo, listHeight = 10, onPaneState }) {
+export function ActionList({ repo, listHeight = 10, onPaneState, initialBranch = null }) {
   const { t } = useTheme()
   const { notifyDialog } = useContext(AppContext)
   const { stdout } = useStdout()
   const visibleHeight = listHeight || Math.max(5, (stdout?.rows || 24) - 8)
 
-  const { data: runs, loading, error, refetch } = useGh(listRuns, [repo])
+  const [branchFilter, setBranchFilter] = useState(initialBranch)
+  const { data: runs, loading, error, refetch } = useGh(listRuns, [repo, branchFilter ? { branch: branchFilter } : {}])
   const [cursor, setCursor] = useState(0)
   const [scrollOffset, setScrollOffset] = useState(0)
   const [dialog, setDialog] = useState(null) // null | 'logs' | 'cancel'
@@ -112,7 +113,7 @@ export function ActionList({ repo, listHeight = 10, onPaneState }) {
     if (input === 'j' || key.downArrow) { moveCursor(1); return }
     if (input === 'k' || key.upArrow)  { moveCursor(-1); return }
     if (input === 'r') { refetch(); return }
-    if (loading || items.length === 0) return
+    if (input === 'x' && branchFilter) { setBranchFilter(null); setCursor(0); setScrollOffset(0); return }
 
     if (key.return || input === 'l') {
       openLogs()
@@ -178,13 +179,17 @@ export function ActionList({ repo, listHeight = 10, onPaneState }) {
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {statusMsg && (
-        <Box paddingX={1}>
+      <Box paddingX={1} gap={1}>
+        {branchFilter
+          ? <><Text color={t.ui.dim}>branch:</Text><Text color={t.ci.pending} bold>{branchFilter}</Text><Text color={t.ui.dim}>  [x] clear filter</Text></>
+          : <Text color={t.ui.dim}>all branches</Text>
+        }
+        {statusMsg && (
           <Text color={statusMsg.isError ? t.ci.fail : t.ci.pass}>
             {statusMsg.msg}{statusMsg.persist ? '  [any key to dismiss]' : ''}
           </Text>
-        </Box>
-      )}
+        )}
+      </Box>
       <Box flexDirection="column" flexGrow={1}>
         {loading && items.length === 0 && (
           <ActionListSkeleton count={visibleHeight} />
@@ -204,7 +209,7 @@ export function ActionList({ repo, listHeight = 10, onPaneState }) {
         })}
         {!loading && items.length === 0 && (
           <Box paddingX={2} paddingY={1}>
-            <Text color={t.ui.muted}>No workflow runs found. [r] refresh</Text>
+            <Text color={t.ui.muted}>No workflow runs found{branchFilter ? ` for branch "${branchFilter}"` : ''}. [r] refresh{branchFilter ? '  [x] clear filter' : ''}</Text>
           </Box>
         )}
       </Box>

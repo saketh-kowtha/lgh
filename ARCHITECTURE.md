@@ -80,3 +80,14 @@ To prevent merge conflicts and "branch drift":
 ## 21. Complete bug fix log (reference)
 
 ... [Previous B-01 through B-14 content preserved] ...
+
+**B-15 — CI checks missing `await` in `getCheckRunAnnotations`**
+- Root cause: `return run([...])` without `await` inside `try/catch` — the promise rejection escaped the catch block.
+- Fix: Changed to `return await run([...])` so errors are caught and `[]` is returned.
+
+**F-12 — Interactive CI checks in PR detail**
+- `[c]` key enters checks navigation mode; `j/k` move within checks; `[l]` shows annotations in LogViewer; `[R]` re-requests check run via GitHub API `POST /check-runs/{id}/rerequest`; `[Enter/o]` opens check URL in browser; `[Esc]` exits checks mode.
+- Failing checks are sorted to the top of the checks section automatically.
+- `CIBadge` in PR list now shows `✗ N/total` count format instead of a bare `✗`.
+- `[C]` key on non-conflicting PR → switches to Actions pane pre-filtered to PR's branch.
+- `ActionList` accepts `initialBranch` prop; `[x]` clears the branch filter.

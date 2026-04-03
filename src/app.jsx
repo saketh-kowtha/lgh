@@ -26,6 +26,7 @@ import { PRList } from './features/prs/list.jsx'
 import { PRDetail } from './features/prs/detail.jsx'
 import { PRDiff } from './features/prs/diff.jsx'
 import { PRComments } from './features/prs/comments.jsx'
+import { ConflictView } from './features/prs/ConflictView.jsx'
 import { IssueList } from './features/issues/list.jsx'
 import { IssueDetail } from './features/issues/detail.jsx'
 import { BranchList } from './features/branches/index.jsx'
@@ -35,6 +36,7 @@ import { LogPane } from './features/logs/index.jsx'
 import { NotificationList } from './features/notifications/index.jsx'
 import { CustomPane } from './components/CustomPane.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
+import { AIAssistant } from './components/AIAssistant.jsx'
 
 const _config = loadConfig()
 
@@ -69,6 +71,7 @@ for (const [id, def] of Object.entries(_config.customPanes || {})) {
 // ─── Keyboard reference — shown by ? in every view ───────────────────────────
 
 const GLOBAL_KEYS = [
+  { key: 'Ctrl+A',           label: 'AI assistant' },
   { key: 'Tab / Shift+Tab', label: 'cycle panes forward / back' },
   { key: 'r',               label: 'refresh (bypass cache)' },
   { key: 'o',               label: 'open current item in browser' },
@@ -405,14 +408,17 @@ function App({ repo }) {
   const [selectedItem, setSelectedItem] = useState(null)
   const [hoveredItem, setHoveredItem]   = useState(null)
   const [showHelp, setShowHelp]         = useState(false)
+  const [showAI, setShowAI]             = useState(false)
   const [paneState, setPaneState]       = useState({})
 
-  const dialogActiveRef = useRef(false)
-  const savedListPosition = useRef({})
+  const dialogActiveRef    = useRef(false)
+  const savedListPosition  = useRef({})
+  const pendingNavigationRef = useRef(null)
   const notifyDialog = useCallback((active) => { dialogActiveRef.current = active }, [])
   const openHelp     = useCallback(() => setShowHelp(true), [])
+  const openAI       = useCallback(() => setShowAI(true), [])
 
-  const appCtx = { notifyDialog, openHelp, setMouseEnabled }
+  const appCtx = { notifyDialog, openHelp, openAI, setMouseEnabled }
 
   // ─── IPC state broadcast ──────────────────────────────────────────────────
   useEffect(() => {
@@ -432,8 +438,25 @@ function App({ repo }) {
   const detailPanelWidth = showDetailPanel ? 40 : 0
   const listHeight = Math.max(3, rows - 5)
 
+  // ─── AI navigate callback ─────────────────────────────────────────────────
+  const handleAINavigate = useCallback(({ pane: tp, itemNumber, filter } = {}) => {
+    setShowAI(false)
+    const validPane = PANES.includes(tp) ? tp : null
+    if (validPane) {
+      setPane(validPane)
+      setView('list')
+      setSelectedItem(null)
+      setHoveredItem(null)
+      savedListPosition.current = {}
+      pendingNavigationRef.current = { itemNumber, filter }
+    }
+  }, [PANES])
+
   // ─── Global key handler ───────────────────────────────────────────────────
   useInput((input, key) => {
+    // Ctrl+A: open AI assistant (before dialog guard so it always fires)
+    if (key.ctrl && input === 'a') { setShowAI(true); return }
+
     if (dialogActiveRef.current) return
 
     if (input === '?') { setShowHelp(v => !v); return }
@@ -467,12 +490,13 @@ function App({ repo }) {
     if (input === 'L' && process.env.LAZYHUB_DEBUG === '1') { setView('logs'); setSelectedItem(null); return }
 
     if (input === 'q' || key.escape) {
-      if (showHelp)           { setShowHelp(false); return }
-      if (view === 'settings'){ setView('list'); return }
-      if (view === 'logs')    { setView('list'); return }
-      if (view === 'comments'){ setView('diff'); return }
-      if (view === 'diff')    { setView(selectedItem?._fromList ? 'list' : 'detail'); return }
-      if (view === 'detail')  { setSelectedItem(null); setView('list'); return }
+      if (showHelp)              { setShowHelp(false); return }
+      if (view === 'settings')   { setView('list'); return }
+      if (view === 'logs')       { setView('list'); return }
+      if (view === 'comments')   { setView('diff'); return }
+      if (view === 'conflict')   { setView('detail'); return }
+      if (view === 'diff')       { setView(selectedItem?._fromList ? 'list' : 'detail'); return }
+      if (view === 'detail')     { setSelectedItem(null); setView('list'); return }
       exit()
     }
   })
@@ -482,15 +506,56 @@ function App({ repo }) {
     savedListPosition.current = { cursor: paneState.cursor ?? 0, scrollOffset: paneState.scrollOffset ?? 0 }
     setSelectedItem(item); setView('detail')
   }, [paneState])
-  const goToDiff     = useCallback((item) => { setSelectedItem({ ...item, _fromList: view === 'list' }); setView('diff') }, [view])
-  const goToComments = useCallback(() => setView('comments'), [])
-  const goBack       = useCallback(() => {
+  const goToDiff       = useCallback((item) => { setSelectedItem({ ...item, _fromList: view === 'list' }); setView('diff') }, [view])
+  const goToComments   = useCallback(() => setView('comments'), [])
+  const goToConflict   = useCallback(() => setView('conflict'), [])
+  const [actionsBranch, setActionsBranch] = useState(null)
+  const goToActions    = useCallback((branch) => {
+    setActionsBranch(branch || null)
+    setPane('actions')
+    setSelectedItem(null)
+    setView('list')
+  }, [])
+  const goBack         = useCallback(() => {
     if (view === 'comments') { setView('diff'); return }
+    if (view === 'conflict') { setView('detail'); return }
     if (view === 'diff')     { setView(selectedItem?._fromList ? 'list' : 'detail'); return }
     setSelectedItem(null); setView('list')
   }, [view, selectedItem])
 
   const onPaneState = useCallback((s) => setPaneState(s), [])
+
+  // ─── AI assistant overlay ─────────────────────────────────────────────────
+  if (showAI) {
+    return (
+      <AppContext.Provider value={appCtx}>
+        <Box flexDirection="column" height={rows} overflow="hidden">
+          <Box flexDirection="row" flexGrow={1} overflow="hidden">
+            {showSidebar && (
+              <Sidebar currentPane={pane} visiblePanes={PANES}
+                paneLabels={PANE_LABELS} paneIcons={PANE_ICONS}
+                onSelect={(p) => { setPane(p); setShowAI(false); setHoveredItem(null); setSelectedItem(null); setView('list') }}
+                height={rows - 2}
+              />
+            )}
+            <ErrorBoundary>
+              <AIAssistant
+                repo={repo}
+                pane={pane}
+                selectedItem={selectedItem}
+                onClose={() => setShowAI(false)}
+                onNavigate={handleAINavigate}
+                aiConfig={_config.ai}
+                rows={rows - 2}
+              />
+            </ErrorBoundary>
+          </Box>
+          <StatusBar repo={repo} pane={pane} count={paneState.count} />
+          <FooterKeys keys={[{ key: 'Esc', label: 'close AI' }, { key: 'j/k', label: 'scroll' }, { key: 'Enter', label: 'send' }]} />
+        </Box>
+      </AppContext.Provider>
+    )
+  }
 
   // ─── Help overlay — rendered first so ? works from every view ────────────
   if (showHelp) {
@@ -518,6 +583,33 @@ function App({ repo }) {
   }
 
   // ─── Full-screen views ────────────────────────────────────────────────────
+  if (view === 'conflict' && selectedItem) {
+    return (
+      <AppContext.Provider value={appCtx}>
+        <Box flexDirection="column" height={rows}>
+          <Box flexDirection="row" flexGrow={1} overflow="hidden">
+            <ErrorBoundary>
+              <ConflictView
+                pr={selectedItem}
+                repo={repo}
+                onBack={goBack}
+                onResolved={() => setView('detail')}
+              />
+            </ErrorBoundary>
+          </Box>
+          <StatusBar repo={repo} pane={pane} />
+          <FooterKeys keys={[
+            { key: 'j/k', label: 'navigate' },
+            { key: 'e/Enter', label: 'open editor' },
+            { key: 'Space', label: 'stage/unstage' },
+            { key: 'c', label: 'commit + push' },
+            { key: 'Esc', label: 'back' },
+          ]} />
+        </Box>
+      </AppContext.Provider>
+    )
+  }
+
   if (view === 'diff' && selectedItem) {
     return (
       <AppContext.Provider value={appCtx}>
@@ -631,6 +723,8 @@ function App({ repo }) {
                 repo={repo}
                 onBack={goBack}
                 onOpenDiff={goToDiff}
+                onOpenConflict={pane === 'prs' ? goToConflict : undefined}
+                onOpenActions={pane === 'prs' ? goToActions : undefined}
               />
             </ErrorBoundary>
           </Box>
@@ -658,7 +752,7 @@ function App({ repo }) {
           initialScrollOffset={savedListPosition.current.scrollOffset ?? 0} />
       )
       case 'branches':     return <BranchList repo={repo} listHeight={listHeight} onPaneState={onPaneState} />
-      case 'actions':      return <ActionList repo={repo} listHeight={listHeight} onPaneState={onPaneState} />
+      case 'actions':      return <ActionList repo={repo} listHeight={listHeight} onPaneState={onPaneState} initialBranch={actionsBranch} />
       case 'notifications': return (
         <NotificationList repo={repo} listHeight={listHeight} onPaneState={onPaneState}
           onNavigateTo={(notif) => {
