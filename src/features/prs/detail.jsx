@@ -402,20 +402,29 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff, onOpenConflict, o
     if (input === 'l') { setDialog('labels'); return }
     if (input === 'A') { setDialog('assignees'); return }
     if (input === 'R' && pr && pr.state === 'OPEN') { setDialog('reviewers'); return }
-    if (input === 'C' && pr && pr.state === 'OPEN' && pr.mergeable === 'CONFLICTING' && onOpenConflict) {
+    if (input === 'C' && pr && pr.state === 'OPEN' && onOpenConflict &&
+        (pr.mergeable === 'CONFLICTING' || pr.mergeable === 'UNKNOWN')) {
       onOpenConflict()
       return
     }
-    // C on non-conflicting PR → jump to Actions pane filtered to this branch
-    if (input === 'C' && pr && onOpenActions && pr.mergeable !== 'CONFLICTING') {
+    // C on clean PR → jump to Actions pane filtered to this branch
+    if (input === 'C' && pr && onOpenActions && pr.mergeable === 'MERGEABLE') {
       onOpenActions(pr.headRefName)
       return
     }
     // c (lowercase) — enter checks navigation mode
-    if (input === 'c' && allChecksForNav.length > 0) {
+    if (input === 'c') {
+      if (allChecksForNav.length === 0) {
+        showStatus('No CI checks for this PR')
+        return
+      }
       // Start at first failing check, or 0
       const firstFailing = allChecksForNav.findIndex(c => /failure|error/i.test(c.conclusion || c.status || c.state || ''))
-      setCheckCursor(firstFailing >= 0 ? firstFailing : 0)
+      const startIdx = firstFailing >= 0 ? firstFailing : 0
+      setCheckCursor(startIdx)
+      // Scroll to checks section
+      const checksRow = filteredRows.findIndex(r => r.id === 'checks-hdr')
+      if (checksRow >= 0) setScrollY(Math.min(checksRow, maxScroll))
       return
     }
     if (input === '/') { setSearching(true); setSearchText(''); return }
@@ -654,7 +663,7 @@ export function PRDetail({ prNumber, repo, onBack, onOpenDiff, onOpenConflict, o
             ? <Text color={t.ui.selected}>[j/k] nav checks  [Enter/o] open  [l] annotations  [R] rerun  [Esc] exit checks</Text>
             : maxScroll > 0
               ? <Text color={t.ui.dim}>{scrollY + 1}–{Math.min(scrollY + visibleHeight, filteredRows.length)} / {filteredRows.length}  [j/k] scroll  [gg/G] top/bottom</Text>
-              : pr?.mergeable === 'CONFLICTING'
+              : (pr?.mergeable === 'CONFLICTING' || pr?.mergeable === 'UNKNOWN')
                 ? <Text color={t.pr.conflict || t.ci.pending}>[C] resolve conflicts  [c] checks  [d] diff  [m] merge  [l] labels  [A] assignees  [R] reviewers</Text>
                 : <Text color={t.ui.dim}>[d] diff  [E] editor  [m] merge  [M] auto-merge  [c] checks  [l] labels  [A] assignees  [R] reviewers</Text>
         }
